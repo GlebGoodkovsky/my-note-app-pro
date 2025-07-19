@@ -1,9 +1,8 @@
 /*
-  =================================
-  === Main Desktop/Default Styles ===
-  =================================
+  ================================
+  === Global Styles ===
+  ================================
 */
-
 body {
   font-family: sans-serif;
   align-items: center;
@@ -11,22 +10,19 @@ body {
   flex-direction: column;
 }
 
-/* Add lock icon for visual security feedback */
-#notes-list li::after {
-  content: " 🔒";
-  opacity: 0.3;
-  position: absolute;
-  right: 45px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Dark mode adjustment */
-body.dark-mode #notes-list li::after {
-  opacity: 0.6;
+*:focus {
+  outline: none !important;
 }
 
+/*
+  ================================
+  === Controls Container ===
+  ================================
+*/
 #controls-container {
   background-color: #f5f5f5;
   margin: 20px 0;
@@ -42,6 +38,11 @@ body.dark-mode #notes-list li::after {
   gap: 10px;
 }
 
+/*
+  ================================
+  === Note Input ===
+  ================================
+*/
 #note-input {
   flex: 1;
   padding: 10px 15px;
@@ -49,6 +50,11 @@ body.dark-mode #notes-list li::after {
   border: 1px solid #ddd;
 }
 
+/*
+  ================================
+  === Buttons ===
+  ================================
+*/
 .control-btn {
   padding: 10px 20px;
   border-radius: 20px;
@@ -80,10 +86,53 @@ body.dark-mode #notes-list li::after {
   cursor: pointer;
 }
 
-*:focus {
-  outline: none !important;
+.delete-btn {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.3;
+  transition: all 0.3s ease;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 18px;
 }
 
+.delete-btn:hover {
+  transform: translateY(-50%) scale(1.1);
+}
+
+.delete-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+#theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+#theme-toggle:hover {
+  transform: scale(1.1);
+}
+
+/*
+  ================================
+  === Notes List & Items ===
+  ================================
+*/
 #notes-list {
   display: flex;
   flex-direction: column;
@@ -130,59 +179,67 @@ body.dark-mode #notes-list li::after {
   background-color: #f0f7ff;
 }
 
-.delete-btn {
-  position: absolute;
-  top: 50%;
-  right: 15px;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  opacity: 0.3;
-  transition: all 0.3s ease;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 18px;
-}
-
 #notes-list li:hover .delete-btn {
   opacity: 1;
   background-color: #fcdee2;
 }
 
-.delete-btn:hover {
-  transform: translateY(-50%) scale(1.1);
-}
-
-.delete-btn:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
-#theme-toggle {
+/* Lock Icon */
+#notes-list li::after {
+  content: " 🔒";
+  opacity: 0.3;
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-}
-
-#theme-toggle:hover {
-  transform: scale(1.1);
+  right: 45px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
 }
 
 /*
-=========================
-=== Dark Mode Styles ===
-=========================
+  ================================
+  === Delete Animation ===
+  ================================
 */
+@keyframes delete-highlight-light {
+  0% {
+    background-color: #ffeaea;
+    box-shadow: 0 0 0 2px #ff6b6b;
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    background-color: #ffcccc;
+    box-shadow: 0 0 0 4px #ff3b3b;
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
 
+@keyframes delete-highlight-dark {
+  0% {
+    background-color: #5c2a32;
+    box-shadow: 0 0 0 2px #ff4d4d;
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    background-color: #7a3434;
+    box-shadow: 0 0 0 4px #ff1a1a;
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+.deleting {
+  animation: delete-highlight-light 0.2s ease-out forwards !important;
+  pointer-events: none; /* Prevents interactions during animation */
+}
+
+/*
+  ================================
+  === Dark Mode Styles ===
+  ================================
+*/
 body.dark-mode {
   background-color: #121212;
   color: #e0e0e0;
@@ -235,14 +292,21 @@ body.dark-mode #notes-list li:hover .delete-btn {
   background-color: #5c2a32;
 }
 
+body.dark-mode #notes-list li::after {
+  opacity: 0.6;
+}
+
+/* Dark mode delete animation */
+body.dark-mode .deleting {
+  animation: delete-highlight-dark 0.2s ease-out forwards !important;
+}
+
 /*
-================================
-=== Responsive Mobile Styles ===
-================================
+  ================================
+  === Responsive Mobile Styles ===
+  ================================
 */
-
 @media (max-width: 600px) {
-
   #controls-container {
       flex-wrap: nowrap;
       padding: 8px 12px;
@@ -262,64 +326,4 @@ body.dark-mode #notes-list li:hover .delete-btn {
   #sort-method {
       max-width: 115px;
   }
-}
-
-/*
-  ================================
-  === Mobile Polish & Fixes ===
-  ================================
-*/
-
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-
-
-
-
-
-
-
-
-
-/* === Enhanced Delete Animation === */
-@keyframes delete-highlight-light {
-  0% {
-    background-color: #ffeaea;
-    box-shadow: 0 0 0 2px #ff6b6b;
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    background-color: #ffcccc;
-    box-shadow: 0 0 0 4px #ff3b3b;
-    transform: scale(0.95);
-    opacity: 0;
-  }
-}
-
-@keyframes delete-highlight-dark {
-  0% {
-    background-color: #5c2a32;
-    box-shadow: 0 0 0 2px #ff4d4d;
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    background-color: #7a3434;
-    box-shadow: 0 0 0 4px #ff1a1a;
-    transform: scale(0.95);
-    opacity: 0;
-  }
-}
-
-.deleting {
-  animation: delete-highlight-light 0.2s ease-out forwards !important;
-  pointer-events: none; /* Prevents interactions during animation */
-}
-
-/* Dark mode delete animation */
-body.dark-mode .deleting {
-  animation: delete-highlight-dark 0.2s ease-out forwards !important;
 }
