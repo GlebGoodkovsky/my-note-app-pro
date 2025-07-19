@@ -273,3 +273,53 @@ body.dark-mode #notes-list li:hover .delete-btn {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+
+
+
+
+
+
+
+
+
+/* === Enhanced Delete Animation === */
+@keyframes delete-highlight-light {
+  0% {
+    background-color: #ffeaea;
+    box-shadow: 0 0 0 2px #ff6b6b;
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    background-color: #ffcccc;
+    box-shadow: 0 0 0 4px #ff3b3b;
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes delete-highlight-dark {
+  0% {
+    background-color: #5c2a32;
+    box-shadow: 0 0 0 2px #ff4d4d;
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    background-color: #7a3434;
+    box-shadow: 0 0 0 4px #ff1a1a;
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+.deleting {
+  animation: delete-highlight-light 0.2s ease-out forwards !important;
+  pointer-events: none; /* Prevents interactions during animation */
+}
+
+/* Dark mode delete animation */
+body.dark-mode .deleting {
+  animation: delete-highlight-dark 0.2s ease-out forwards !important;
+}

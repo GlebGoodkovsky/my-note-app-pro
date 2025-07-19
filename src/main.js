@@ -5,7 +5,41 @@ const sortMethodSelect = document.getElementById('sort-method');
 
 const noteTimestamps = {};
 
+
+
+
+//modified code start
+
+// Helper function for delete animation
+const createDeleteAnimation = (element) => {
+    const rect = element.getBoundingClientRect();
+    const animationContainer = document.getElementById('animation-container');
+    
+    const circle = document.createElement('div');
+    circle.className = 'delete-animation';
+    circle.style.width = `${rect.width}px`;
+    circle.style.height = `${rect.height}px`;
+    circle.style.left = `${rect.left}px`;
+    circle.style.top = `${rect.top}px`;
+    
+    animationContainer.appendChild(circle);
+    
+    // Clean up after animation completes
+    setTimeout(() => {
+        circle.remove();
+    }, 400);
+};
+
+//modified code end
+
+
+
+
 sortMethodSelect.addEventListener('change', sortNotes); 
+
+
+
+
 
 const saveNotes = () => {
   const noteData = Array.from(notesList.children).map(note => ({
@@ -16,6 +50,17 @@ const saveNotes = () => {
   
   localStorage.setItem('notes', JSON.stringify(noteData));
 };
+
+
+
+
+
+
+
+
+
+
+//modified code start
 
 const buildNote = (text) => {
     const newNote = document.createElement('li');
@@ -31,12 +76,33 @@ const buildNote = (text) => {
     const deleteButton = document.createElement('button');
     deleteButton.textContent = '🗑️';
     deleteButton.className = "delete-btn";
-    deleteButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        delete noteTimestamps[noteId];
-        newNote.remove();
-        saveNotes();
-    });
+    
+// Remove the createDeleteAnimation() function completely
+
+// Inside deleteButton event handler
+deleteButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    
+    // Add deleting class for animation
+    newNote.classList.add('deleting');
+    
+    // Remove after animation completes
+    setTimeout(() => {
+      newNote.remove();
+      delete noteTimestamps[noteId];
+      saveNotes();
+    }, 200); // Matches 0.2s animation
+  });
+
+//modeified code end
+
+
+
+
+
+
+
+
     
     newNote.appendChild(deleteButton);
     newNote.appendChild(textSpan);
