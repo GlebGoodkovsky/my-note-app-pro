@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Note App</title>
-    <!-- Notice: The word "html" is gone from here! -->
+    
+    <!-- Add DOMPurify for security -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
+    
     <link rel="stylesheet" href="/src/style.css"> 
   </head>
   <body>
@@ -25,8 +28,6 @@
     </div>
 
     <ul id="notes-list"></ul>
-
-    <!-- Notice: The word "html" is also gone from here! -->
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
