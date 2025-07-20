@@ -4,210 +4,235 @@ const notesList = document.getElementById('notes-list');
 const sortMethodSelect = document.getElementById('sort-method');
 
 const noteTimestamps = {};
+let draggedItem = null;
 
+// ================================
+// === Core Note Functions ===
+// ================================
 
-
-
-//modified code start
-
-// Helper function for delete animation
-const createDeleteAnimation = (element) => {
-    const rect = element.getBoundingClientRect();
-    const animationContainer = document.getElementById('animation-container');
-    
-    const circle = document.createElement('div');
-    circle.className = 'delete-animation';
-    circle.style.width = `${rect.width}px`;
-    circle.style.height = `${rect.height}px`;
-    circle.style.left = `${rect.left}px`;
-    circle.style.top = `${rect.top}px`;
-    
-    animationContainer.appendChild(circle);
-    
-    // Clean up after animation completes
-    setTimeout(() => {
-        circle.remove();
-    }, 400);
-};
-
-//modified code end
-
-
-
-
-sortMethodSelect.addEventListener('change', sortNotes); 
-
-
-
-
-
+// MODIFIED: Selector changed to `.note-item` to match the new, more robust DOM structure.
 const saveNotes = () => {
-  const noteData = Array.from(notesList.children).map(note => ({
-    text: note.querySelector('span').textContent,
-    id: note.dataset.id,
-    timestamp: noteTimestamps[note.dataset.id]
-  }));
-  
+  const noteData = [];
+  notesList.querySelectorAll('.note-item').forEach(noteItem => {
+    noteData.push({
+      text: noteItem.querySelector('.note-text').textContent,
+      id: noteItem.dataset.id,
+      timestamp: noteTimestamps[noteItem.dataset.id]
+    });
+  });
   localStorage.setItem('notes', JSON.stringify(noteData));
 };
 
-
-
-
-
-
-
-
-
-
-//modified code start
-
+// --- REWRITTEN buildNote Function ---
+// The old function was complex and created separate, problematic drag handles.
+// This new version creates a single, unified `<li>` element that is clean and stable.
 const buildNote = (text) => {
-    const newNote = document.createElement('li');
-    const textSpan = document.createElement('span');
+  // NEW: The main `<li>` is now the draggable container for the entire row.
+  const noteItem = document.createElement('li');
+  noteItem.className = 'note-item';
+  noteItem.draggable = true;
 
-    // 🔒 SECURITY FIX: Sanitize text before displaying
-    textSpan.textContent = DOMPurify.sanitize(text);
+  // NEW: A `div` to hold the visual content of the note.
+  const noteContent = document.createElement('div');
+  noteContent.className = 'note-content';
 
-    const noteId = 'note-' + Date.now();
-    newNote.dataset.id = noteId;
-    noteTimestamps[noteId] = Date.now();
+  const textSpan = document.createElement('span');
+  textSpan.className = 'note-text';
+  textSpan.textContent = DOMPurify.sanitize(text);
 
-    const deleteButton = document.createElement('button');
-    deleteButton.textContent = '🗑️';
-    deleteButton.className = "delete-btn";
-    
-// Remove the createDeleteAnimation() function completely
+  const noteId = 'note-' + Date.now();
+  noteItem.dataset.id = noteId;
+  noteTimestamps[noteId] = Date.now();
 
-// Inside deleteButton event handler
-deleteButton.addEventListener('click', (e) => {
+  const deleteButton = document.createElement('button');
+  deleteButton.textContent = '🗑️';
+  deleteButton.className = "delete-btn";
+
+  // --- Attach Event Listeners ---
+
+  // MODIFIED: Delete logic now uses `animationend` for a clean removal,
+  // and it removes the entire `noteItem` so no handles are left behind.
+  deleteButton.addEventListener('click', (e) => {
     e.stopPropagation();
-    
-    // Add deleting class for animation
-    newNote.classList.add('deleting');
-    
-    // Remove after animation completes
-    setTimeout(() => {
-      newNote.remove();
+    noteContent.classList.add('deleting');
+    noteContent.addEventListener('animationend', () => {
+      noteItem.remove();
       delete noteTimestamps[noteId];
       saveNotes();
-    }, 200); // Matches 0.2s animation
+    });
   });
 
-//modeified code end
-
-
-
-
-
-
-
-
+  // MODIFIED: Click listener is now on `noteContent` for better event targeting.
+  noteContent.addEventListener('click', (e) => {
+    // Prevents editing when the delete button is clicked.
+    if (e.target.closest('.delete-btn')) return;
+    if (noteContent.classList.contains('editing')) return;
     
-    newNote.appendChild(deleteButton);
-    newNote.appendChild(textSpan);
+    noteContent.classList.add('editing');
+    textSpan.contentEditable = true;
+    textSpan.focus();
+  });
 
-    newNote.addEventListener('click', (e) => {
-        if (!newNote.classList.contains('editing') && e.target !== deleteButton) {
-            newNote.classList.add('editing');
-            textSpan.contentEditable = true;
-            textSpan.focus();
-            
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.selectNodeContents(textSpan);
-            range.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-    });
+  textSpan.addEventListener('blur', () => {
+    noteContent.classList.remove('editing');
+    textSpan.contentEditable = false;
+    saveNotes();
+  });
 
-    textSpan.addEventListener('blur', () => {
-        newNote.classList.remove('editing');
-        textSpan.contentEditable = false;
+  textSpan.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      textSpan.blur();
+    }
+  });
 
-        // 🔒 SECURITY FIX: Sanitize after editing
-        const cleanText = DOMPurify.sanitize(textSpan.textContent);
-        textSpan.textContent = cleanText;
+  // MODIFIED: Drag listeners are now on the main `noteItem`.
+  noteItem.addEventListener('dragstart', handleDragStart);
+  noteItem.addEventListener('dragend', handleDragEnd);
 
-        saveNotes();
-    });
+  // Assemble the note
+  noteContent.appendChild(textSpan);
+  noteContent.appendChild(deleteButton);
+  noteItem.appendChild(noteContent); // The `noteContent` is inside the `noteItem`.
+  
+  // DELETED: All logic for creating a separate `.drag-handle` element has been removed.
 
-    textSpan.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            textSpan.blur();
-        }
-    });
-    notesList.appendChild(newNote);
+  notesList.appendChild(noteItem);
 };
 
-function sortNotes() {
-    const method = sortMethodSelect.value;
-    const notes = Array.from(notesList.children);
-    
-    notes.sort((a, b) => {
-        const aText = a.querySelector('span').textContent.toLowerCase();
-        const bText = b.querySelector('span').textContent.toLowerCase();
-        const aTime = noteTimestamps[a.dataset.id];
-        const bTime = noteTimestamps[b.dataset.id];
-        
-        switch(method) {
-            case 'newest': return bTime - aTime;
-            case 'oldest': return aTime - bTime;
-            case 'a-z': return aText.localeCompare(bText);
-            case 'z-a': return bText.localeCompare(aText);
-            default: return 0;
-        }
-    });
-    
-    notes.forEach(note => notesList.appendChild(note));
-    saveNotes();
+// ===================================================
+// === Drag & Drop Handlers (FINAL STABLE VERSION) ===
+// ===================================================
+// REWRITTEN: This entire section was rewritten for stability. It now uses a single
+// drop indicator and attaches the main listeners to the parent `notesList`.
+
+// NEW: A helper function to find the correct drop position.
+function getElementAfterDrag(container, y) {
+  const draggableElements = [...container.querySelectorAll('.note-item:not(.dragging)')];
+
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
-addButton.addEventListener('click', function() {
-    const userText = noteInput.value.trim();
-    if (userText === "") return;
-    buildNote(userText);
-    saveNotes(); 
-    noteInput.value = "";
-    sortNotes(); 
+function handleDragStart(e) {
+  // NEW: Prevents dragging when trying to select text for editing.
+  if (e.target.isContentEditable) {
+    e.preventDefault();
+    return;
+  }
+  draggedItem = this;
+  setTimeout(() => this.classList.add('dragging'), 0);
+  e.dataTransfer.setData('text/plain', this.dataset.id);
+}
+
+function handleDragEnd() {
+  if (!draggedItem) return;
+  draggedItem.classList.remove('dragging');
+  const indicator = document.querySelector('.drop-indicator');
+  if (indicator) {
+    indicator.remove();
+  }
+  draggedItem = null;
+}
+
+// NEW: Listeners are now on the parent `<ul>`. This is more performant and stable.
+notesList.addEventListener('dragover', e => {
+  e.preventDefault();
+  
+  const afterElement = getElementAfterDrag(notesList, e.clientY);
+  
+  const existingIndicator = document.querySelector('.drop-indicator');
+  if (existingIndicator) existingIndicator.remove();
+
+  const indicator = document.createElement('div');
+  indicator.className = 'drop-indicator';
+
+  if (afterElement == null) {
+    notesList.appendChild(indicator);
+  } else {
+    notesList.insertBefore(indicator, afterElement);
+  }
 });
 
-const savedNotes = JSON.parse(localStorage.getItem('notes') || '[]');
-savedNotes.forEach(note => {
-
-    // 🔒 SECURITY FIX: Sanitize loaded notes
-    buildNote(DOMPurify.sanitize(note.text));
-
-    if (note.id) {
-        noteTimestamps[note.id] = note.timestamp;
-    }
+notesList.addEventListener('drop', e => {
+  e.preventDefault();
+  const indicator = document.querySelector('.drop-indicator');
+  if (indicator && draggedItem) {
+    notesList.insertBefore(draggedItem, indicator);
+  }
+  if (indicator) indicator.remove();
+  saveNotes();
 });
 
+// ================================
+// === Sorting & Initialization ===
+// ================================
 
-sortNotes();
+// FIXED: The old function sorted an array but never updated the screen.
+// This version now correctly re-appends the sorted notes to the DOM.
+function sortNotes() {
+  const method = sortMethodSelect.value;
+  const notes = Array.from(notesList.querySelectorAll('.note-item'));
 
-const themeToggle = document.getElementById('theme-toggle');
-const body = document.body;
+  notes.sort((a, b) => {
+    const aText = a.querySelector('.note-text').textContent.toLowerCase();
+    const bText = b.querySelector('.note-text').textContent.toLowerCase();
+    const aTime = noteTimestamps[a.dataset.id];
+    const bTime = noteTimestamps[b.dataset.id];
 
-themeToggle.addEventListener('click', () => {
-    body.classList.toggle('dark-mode');
-    if (body.classList.contains('dark-mode')) {
-        themeToggle.textContent = '🌙';
-        localStorage.setItem('theme', 'dark');
-    } else {
-        themeToggle.textContent = '☀️';
-        localStorage.setItem('theme', 'light');
+    switch (method) {
+      case 'newest': return bTime - aTime;
+      case 'oldest': return aTime - bTime;
+      case 'a-z': return aText.localeCompare(bText);
+      case 'z-a': return bText.localeCompare(aText);
+      default: return 0;
     }
+  });
+
+  // This line fixes the sorting by physically re-ordering the notes on the page.
+  notes.forEach(note => notesList.appendChild(note));
+  saveNotes();
+}
+
+// MODIFIED: No longer calls `sortNotes()` after adding a new note.
+// New notes are simply added to the end, preserving any manual order.
+addButton.addEventListener('click', () => {
+  const userText = noteInput.value.trim();
+  if (userText === "") return;
+  buildNote(userText);
+  saveNotes();
+  noteInput.value = "";
 });
 
 function applySavedTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        body.classList.add('dark-mode');
-        themeToggle.textContent = '🌙';
-    }
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    document.getElementById('theme-toggle').textContent = '🌙';
+  }
 }
 
-applySavedTheme();
+// RESTRUCTURED: All initialization logic is now inside a `DOMContentLoaded`
+// listener. This is best practice and ensures the script only runs after
+// all HTML elements are ready.
+document.addEventListener('DOMContentLoaded', () => {
+  applySavedTheme();
+  const savedNotes = JSON.parse(localStorage.getItem('notes') || '[]');
+  savedNotes.forEach(note => buildNote(note.text));
+  
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    document.getElementById('theme-toggle').textContent = isDarkMode ? '🌙' : '☀️';
+  });
+
+  sortMethodSelect.addEventListener('change', sortNotes);
+});

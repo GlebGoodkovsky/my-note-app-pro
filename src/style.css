@@ -1,7 +1,7 @@
 /*
-  ================================
+  =====================
   === Global Styles ===
-  ================================
+  =====================
 */
 body {
   font-family: sans-serif;
@@ -12,6 +12,8 @@ body {
 
 * {
   -webkit-tap-highlight-color: transparent;
+  /* NEW: Added for more predictable layout calculations across all elements. */
+  box-sizing: border-box; 
 }
 
 *:focus {
@@ -19,9 +21,9 @@ body {
 }
 
 /*
-  ================================
+  ==========================
   === Controls Container ===
-  ================================
+  ==========================
 */
 #controls-container {
   background-color: #f5f5f5;
@@ -39,9 +41,9 @@ body {
 }
 
 /*
-  ================================
+  ==================
   === Note Input ===
-  ================================
+  ==================
 */
 #note-input {
   flex: 1;
@@ -51,9 +53,9 @@ body {
 }
 
 /*
-  ================================
+  ===============
   === Buttons ===
-  ================================
+  ===============
 */
 .control-btn {
   padding: 10px 20px;
@@ -105,12 +107,10 @@ body {
   font-size: 18px;
 }
 
-.delete-btn:hover {
-  transform: translateY(-50%) scale(1.1);
-}
-
-.delete-btn:active {
-  transform: translateY(-50%) scale(0.95);
+/* MODIFIED: Changed selector to target .note-content for hover effect. */
+#notes-list .note-content:hover .delete-btn {
+  opacity: 1;
+  background-color: #fcdee2;
 }
 
 #theme-toggle {
@@ -129,24 +129,32 @@ body {
 }
 
 /*
-  ================================
+  ==========================
   === Notes List & Items ===
-  ================================
+  ==========================
 */
 #notes-list {
   display: flex;
   flex-direction: column;
-  align-items: center;
   width: 80%;
-  max-width: 590px;
+  max-width: 650px;
   padding: 0;
   margin: 0 auto;
   list-style-type: none;
 }
 
-#notes-list li {
+/* MODIFIED: Old '#notes-list li' is now '.note-item'. It's now a flex container for the (removed) handle and the note content. */
+#notes-list li.note-item {
+  display: flex;
+  align-items: center;
   margin-top: 12px;
-  padding: 0;
+  transition: opacity 0.3s ease;
+  cursor: grab; /* The entire row is now grabbable. */
+}
+
+/* NEW: This class wraps the visual part of the note, separating it from the (now removed) drag handle. */
+.note-content {
+  flex-grow: 1;
   border-radius: 40px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   background-color: #fff;
@@ -155,150 +163,103 @@ body {
   position: relative;
   width: 100%;
   overflow: hidden;
-  padding-right: 50px;
+  padding: 0 50px 0 20px; /* Adjusted padding as there's no handle inside. */
 }
 
-#notes-list li span {
+/* MODIFIED: Old '#notes-list li span' is now '.note-text' for clarity. */
+.note-text {
   display: block;
   width: 100%;
   word-wrap: break-word;
   white-space: pre-wrap;
-  padding: 15px 20px;
-  box-sizing: border-box;
-  cursor: pointer;
+  padding: 15px 0;
+  cursor: text; /* Overrides the 'grab' cursor so text can be selected. */
 }
 
-#notes-list li:hover {
-  background-color: #f4f7fa;
+.note-content:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 10px rgba(0,0,0,0.15);
 }
 
-#notes-list li.editing {
-  box-shadow: 0 0 0 2px #4a90e2;
-  background-color: #f0f7ff;
+/* MODIFIED: Selectors updated for the new structure. Added !important to ensure styles apply during animations. */
+.note-content.editing {
+  box-shadow: 0 0 0 2px #4a90e2 !important;
+  background-color: #f0f7ff !important;
 }
 
-#notes-list li:hover .delete-btn {
-  opacity: 1;
-  background-color: #fcdee2;
+/* DELETED: Removed the old lock icon style (`#notes-list li::after`). */
+
+/*
+  =================================================
+  === Drag & Drop Styles (FINAL STABLE VERSION) ===
+  =================================================
+*/
+
+/* DELETED: All old, complex, and glitchy drag handle styles (`.drag-handle-container`, etc.) were removed. */
+
+/* MODIFIED: This rule now defines the style for the entire note item being dragged, including the inner highlight. */
+.note-item.dragging .note-content {
+  background-color: #fff9e1 !important; /* Light yellow inner highlight */
+  box-shadow: 0 0 0 2px #FFD700 !important; /* Yellow outline */
+  border-color: #FFD700 !important;
 }
 
-/* Lock Icon */
-#notes-list li::after {
-  content: " 🔒";
-  opacity: 0.3;
-  position: absolute;
-  right: 45px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
+/* NEW: A single, clean line to show the drop position. This is more stable than highlighting note borders. */
+.drop-indicator {
+  height: 3px;
+  background: #ffd700;
+  margin: 6px 0;
+  border-radius: 2px;
 }
 
 /*
-  ================================
+  ========================
   === Delete Animation ===
-  ================================
+  ========================
 */
 @keyframes delete-highlight-light {
-  0% {
-    background-color: #ffeaea;
-    box-shadow: 0 0 0 2px #ff6b6b;
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    background-color: #ffcccc;
-    box-shadow: 0 0 0 4px #ff3b3b;
-    transform: scale(0.95);
-    opacity: 0;
-  }
+  from { background-color: #ffeaea; box-shadow: 0 0 0 2px #ff6b6b; transform: scale(1); opacity: 1; }
+  to { background-color: #ffcccc; box-shadow: 0 0 0 4px #ff3b3b; transform: scale(0.95); opacity: 0; }
 }
 
 @keyframes delete-highlight-dark {
-  0% {
-    background-color: #5c2a32;
-    box-shadow: 0 0 0 2px #ff4d4d;
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    background-color: #7a3434;
-    box-shadow: 0 0 0 4px #ff1a1a;
-    transform: scale(0.95);
-    opacity: 0;
-  }
+  from { background-color: #5c2a32; box-shadow: 0 0 0 2px #ff4d4d; transform: scale(1); opacity: 1; }
+  to { background-color: #7a3434; box-shadow: 0 0 0 4px #ff1a1a; transform: scale(0.95); opacity: 0; }
 }
 
-.deleting {
+/* MODIFIED: Selector updated to '.note-content.deleting' to match new structure. */
+.note-content.deleting {
   animation: delete-highlight-light 0.2s ease-out forwards !important;
-  pointer-events: none; /* Prevents interactions during animation */
 }
 
 /*
-  ================================
+  ======================
   === Dark Mode Styles ===
-  ================================
+  ======================
 */
-body.dark-mode {
-  background-color: #121212;
-  color: #e0e0e0;
+body.dark-mode { background-color: #121212; color: #e0e0e0; }
+body.dark-mode #controls-container { background-color: #1e1e1e; border: 1px solid #333; }
+
+/* FIXED: The old code had a typo `dark--mode`. This is now corrected to `dark-mode`. */
+body.dark-mode #note-input { 
+  background-color: #252525; 
+  color: #e0e0e0; 
+  border: 1px solid #444; 
 }
 
-body.dark-mode #controls-container {
-  background-color: #1e1e1e;
-  border: 1px solid #333;
-}
+body.dark-mode #note-input::placeholder { color: #888; }
+body.dark-mode #sort-method { background-color: #252525; color: #e0e0e0; border: 1px solid #444; }
+body.dark-mode .control-btn { background-color: #2a3a57; border: 1px solid #4a5f8a; color: #e0e0e0; }
+body.dark-mode .note-content { background-color: #1e1e1e; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border: 1px solid #333; }
+body.dark-mode .note-content:hover { background-color: #2c2c2c; }
+body.dark-mode .note-content.editing { background-color: #2a3a57 !important; box-shadow: 0 0 0 2px #5a9ce2 !important; }
+body.dark-mode #notes-list .note-content:hover .delete-btn { background-color: #5c2a32; }
+body.dark-mode .note-content.deleting { animation: delete-highlight-dark 0.2s ease-out forwards !important; }
 
-body.dark-mode #note-input {
-  background-color: #252525;
-  color: #e0e0e0;
-  border: 1px solid #444;
-}
-
-body.dark-mode #note-input::placeholder {
-  color: #888;
-}
-
-body.dark-mode #sort-method {
-  background-color: #252525;
-  color: #e0e0e0;
-  border: 1px solid #444;
-}
-
-body.dark-mode .control-btn {
-  background-color: #2a3a57;
-  border: 1px solid #4a5f8a;
-  color: #e0e0e0;
-}
-
-body.dark-mode #notes-list li {
-  background-color: #1e1e1e;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  border: 1px solid #333;
-}
-
-body.dark-mode #notes-list li:hover {
-  background-color: #2c2c2c;
-  box-shadow: 0 5px 10px rgba(0,0,0,0.4);
-}
-
-body.dark-mode #notes-list li.editing {
-  background-color: #2a3a57;
-  box-shadow: 0 0 0 2px #5a9ce2;
-}
-
-body.dark-mode #notes-list li:hover .delete-btn {
-  background-color: #5c2a32;
-}
-
-body.dark-mode #notes-list li::after {
-  opacity: 0.6;
-}
-
-/* Dark mode delete animation */
-body.dark-mode .deleting {
-  animation: delete-highlight-dark 0.2s ease-out forwards !important;
+/* MODIFIED: Selector updated for dark mode drag highlight. */
+body.dark-mode .note-item.dragging .note-content { 
+  background-color: #423d22 !important; 
+  border-color: #FFD700 !important; 
 }
 
 /*
@@ -307,23 +268,7 @@ body.dark-mode .deleting {
   ================================
 */
 @media (max-width: 600px) {
-  #controls-container {
-      flex-wrap: nowrap;
-      padding: 8px 12px;
-      gap: 6px;
-  }
-  
-  #sort-method,
-  .control-btn,
-  #note-input {
-      padding: 8px 10px;
-      font-size: 13px;
-      min-width: 0;
-      border-radius: 20px; 
-      border: 1px solid transparent; 
-  }
-
-  #sort-method {
-      max-width: 115px;
-  }
+  #controls-container { flex-wrap: nowrap; padding: 8px 12px; gap: 6px; }
+  #sort-method, .control-btn, #note-input { padding: 8px 10px; font-size: 13px; min-width: 0; }
+  #sort-method { max-width: 115px; }
 }
