@@ -1,7 +1,7 @@
 /*
-  =====================
+  ================================
   === Global Styles ===
-  =====================
+  ================================
 */
 body {
   font-family: sans-serif;
@@ -12,7 +12,6 @@ body {
 
 * {
   -webkit-tap-highlight-color: transparent;
-  /* NEW: Added for more predictable layout calculations across all elements. */
   box-sizing: border-box; 
 }
 
@@ -21,9 +20,9 @@ body {
 }
 
 /*
-  ==========================
+  ================================
   === Controls Container ===
-  ==========================
+  ================================
 */
 #controls-container {
   background-color: #f5f5f5;
@@ -41,9 +40,9 @@ body {
 }
 
 /*
-  ==================
+  ================================
   === Note Input ===
-  ==================
+  ================================
 */
 #note-input {
   flex: 1;
@@ -53,9 +52,9 @@ body {
 }
 
 /*
-  ===============
+  ================================
   === Buttons ===
-  ===============
+  ================================
 */
 .control-btn {
   padding: 10px 20px;
@@ -107,7 +106,6 @@ body {
   font-size: 18px;
 }
 
-/* MODIFIED: Changed selector to target .note-content for hover effect. */
 #notes-list .note-content:hover .delete-btn {
   opacity: 1;
   background-color: #fcdee2;
@@ -129,9 +127,9 @@ body {
 }
 
 /*
-  ==========================
+  ================================
   === Notes List & Items ===
-  ==========================
+  ================================
 */
 #notes-list {
   display: flex;
@@ -143,16 +141,14 @@ body {
   list-style-type: none;
 }
 
-/* MODIFIED: Old '#notes-list li' is now '.note-item'. It's now a flex container for the (removed) handle and the note content. */
 #notes-list li.note-item {
   display: flex;
   align-items: center;
   margin-top: 12px;
   transition: opacity 0.3s ease;
-  cursor: grab; /* The entire row is now grabbable. */
+  cursor: grab;
 }
 
-/* NEW: This class wraps the visual part of the note, separating it from the (now removed) drag handle. */
 .note-content {
   flex-grow: 1;
   border-radius: 40px;
@@ -163,17 +159,16 @@ body {
   position: relative;
   width: 100%;
   overflow: hidden;
-  padding: 0 50px 0 20px; /* Adjusted padding as there's no handle inside. */
+  padding: 0 50px 0 20px;
 }
 
-/* MODIFIED: Old '#notes-list li span' is now '.note-text' for clarity. */
 .note-text {
   display: block;
   width: 100%;
   word-wrap: break-word;
   white-space: pre-wrap;
   padding: 15px 0;
-  cursor: text; /* Overrides the 'grab' cursor so text can be selected. */
+  cursor: text;
 }
 
 .note-content:hover {
@@ -181,30 +176,26 @@ body {
   box-shadow: 0 5px 10px rgba(0,0,0,0.15);
 }
 
-/* MODIFIED: Selectors updated for the new structure. Added !important to ensure styles apply during animations. */
 .note-content.editing {
   box-shadow: 0 0 0 2px #4a90e2 !important;
   background-color: #f0f7ff !important;
 }
 
-/* DELETED: Removed the old lock icon style (`#notes-list li::after`). */
-
 /*
-  =================================================
-  === Drag & Drop Styles (FINAL STABLE VERSION) ===
-  =================================================
+  ================================
+  === Drag & Drop Styles ===
+  ================================
 */
+.note-item.dragging {
+  opacity: 0.5;
+}
 
-/* DELETED: All old, complex, and glitchy drag handle styles (`.drag-handle-container`, etc.) were removed. */
-
-/* MODIFIED: This rule now defines the style for the entire note item being dragged, including the inner highlight. */
 .note-item.dragging .note-content {
-  background-color: #fff9e1 !important; /* Light yellow inner highlight */
-  box-shadow: 0 0 0 2px #FFD700 !important; /* Yellow outline */
+  background-color: #fff9e1 !important;
+  box-shadow: 0 0 0 2px #FFD700 !important;
   border-color: #FFD700 !important;
 }
 
-/* NEW: A single, clean line to show the drop position. This is more stable than highlighting note borders. */
 .drop-indicator {
   height: 3px;
   background: #ffd700;
@@ -213,9 +204,9 @@ body {
 }
 
 /*
-  ========================
+  ================================
   === Delete Animation ===
-  ========================
+  ================================
 */
 @keyframes delete-highlight-light {
   from { background-color: #ffeaea; box-shadow: 0 0 0 2px #ff6b6b; transform: scale(1); opacity: 1; }
@@ -227,26 +218,18 @@ body {
   to { background-color: #7a3434; box-shadow: 0 0 0 4px #ff1a1a; transform: scale(0.95); opacity: 0; }
 }
 
-/* MODIFIED: Selector updated to '.note-content.deleting' to match new structure. */
 .note-content.deleting {
   animation: delete-highlight-light 0.2s ease-out forwards !important;
 }
 
 /*
-  ======================
+  ================================
   === Dark Mode Styles ===
-  ======================
+  ================================
 */
 body.dark-mode { background-color: #121212; color: #e0e0e0; }
 body.dark-mode #controls-container { background-color: #1e1e1e; border: 1px solid #333; }
-
-/* FIXED: The old code had a typo `dark--mode`. This is now corrected to `dark-mode`. */
-body.dark-mode #note-input { 
-  background-color: #252525; 
-  color: #e0e0e0; 
-  border: 1px solid #444; 
-}
-
+body.dark-mode #note-input { background-color: #252525; color: #e0e0e0; border: 1px solid #444; }
 body.dark-mode #note-input::placeholder { color: #888; }
 body.dark-mode #sort-method { background-color: #252525; color: #e0e0e0; border: 1px solid #444; }
 body.dark-mode .control-btn { background-color: #2a3a57; border: 1px solid #4a5f8a; color: #e0e0e0; }
@@ -255,12 +238,7 @@ body.dark-mode .note-content:hover { background-color: #2c2c2c; }
 body.dark-mode .note-content.editing { background-color: #2a3a57 !important; box-shadow: 0 0 0 2px #5a9ce2 !important; }
 body.dark-mode #notes-list .note-content:hover .delete-btn { background-color: #5c2a32; }
 body.dark-mode .note-content.deleting { animation: delete-highlight-dark 0.2s ease-out forwards !important; }
-
-/* MODIFIED: Selector updated for dark mode drag highlight. */
-body.dark-mode .note-item.dragging .note-content { 
-  background-color: #423d22 !important; 
-  border-color: #FFD700 !important; 
-}
+body.dark-mode .note-item.dragging .note-content { background-color: #423d22 !important; border-color: #FFD700 !important; }
 
 /*
   ================================
