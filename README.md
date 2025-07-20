@@ -18,10 +18,11 @@ This application stores notes directly in your browser's `localStorage`. The dat
 
 -   **Clean & Modern UI:** Simple interface with rounded corners and subtle shadows.
 -   **Dark/Light Mode:** Toggle between themes with a click. Your preference is saved.
+-   **Drag & Drop Reordering:** Easily reorder your notes by clicking and dragging them into a new position.
 -   **Full CRUD Functionality:** Create, Read, Update, and Delete notes.
--   **In-Place Editing:** Click on any note to edit its text directly.
--   **Automatic Sorting:** Sort notes by creation date or alphabetically, with instant updates.
--   **Persistent Storage:** Notes are automatically saved in the browser's `localStorage`.
+-   **In-Place Editing:** Click on the note text to edit its content directly.
+-   **Manual & Automatic Sorting:** Drag notes to create a custom order, or use the dropdown to instantly sort by creation date or alphabetically.
+-   **Persistent Storage:** Notes and their order are automatically saved in the browser's `localStorage`.
 -   **Fully Responsive:** Works beautifully on desktop and mobile devices.
 
 ---
@@ -32,7 +33,7 @@ This project uses fundamental web technologies, enhanced by a modern build proce
 
 -   **HTML:** Structures the content of the application.
 -   **CSS:** Handles all styling, including the layout, themes, and responsive design.
--   **JavaScript (Vanilla JS):** Powers all the interactive logic for note management.
+-   **JavaScript (Vanilla JS):** Powers all the interactive logic for note management, including drag-and-drop functionality.
 -   **Vite:** Acts as a lightning-fast development server and bundles the code for production, automatically handling optimizations and cache-busting.
 -   **GitHub Actions:** Provides a fully automated CI/CD pipeline to build and deploy the application to GitHub Pages on every push to the `main` branch.
 
@@ -44,8 +45,9 @@ This project uses fundamental web technologies, enhanced by a modern build proce
 2.  **Change Theme:** Click the ☀️/🌙 icon in the top right.
 3.  **Add a Note:** Type in the input field and click "Add".
 4.  **Edit a Note:** Click on the note text, make your changes, and click outside or press `Enter` to save.
-5.  **Delete a Note:** Hover over a note and click the 🗑️ icon.
-6.  **Sort Notes:** Simply choose a new method from the dropdown menu to instantly re-sort the list.
+5.  **Reorder Notes:** Click and hold any note, then drag it up or down to a new position.
+6.  **Delete a Note:** Hover over a note and click the 🗑️ icon.
+7.  **Sort Notes:** Choose a new method from the dropdown menu to instantly re-sort the entire list.
 
 ---
 
