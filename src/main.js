@@ -1,7 +1,9 @@
 const noteInput = document.getElementById('note-input');
-const addButton = document.getElementById('add-button');
+const searchButton = document.getElementById('search-button');
 const notesList = document.getElementById('notes-list');
 const sortMethodSelect = document.getElementById('sort-method');
+const controlsContainer = document.getElementById('controls-container');
+const customPlaceholder = document.getElementById('custom-placeholder');
 
 const noteTimestamps = {};
 let draggedItem = null;
@@ -26,18 +28,14 @@ const buildNote = (text) => {
   const noteItem = document.createElement('li');
   noteItem.className = 'note-item';
   noteItem.draggable = true;
-
   const noteContent = document.createElement('div');
   noteContent.className = 'note-content';
-
   const textSpan = document.createElement('span');
   textSpan.className = 'note-text';
   textSpan.textContent = DOMPurify.sanitize(text);
-
   const noteId = 'note-' + Date.now();
   noteItem.dataset.id = noteId;
   noteTimestamps[noteId] = Date.now();
-
   const deleteButton = document.createElement('button');
   deleteButton.textContent = '🗑️';
   deleteButton.className = "delete-btn";
@@ -55,7 +53,7 @@ const buildNote = (text) => {
   noteContent.addEventListener('click', (e) => {
     if (e.target.closest('.delete-btn')) return;
     if (noteContent.classList.contains('editing')) return;
-    
+    textSpan.innerHTML = textSpan.textContent;
     noteContent.classList.add('editing');
     textSpan.contentEditable = true;
     textSpan.focus();
@@ -65,6 +63,7 @@ const buildNote = (text) => {
     noteContent.classList.remove('editing');
     textSpan.contentEditable = false;
     saveNotes();
+    filterNotes();
   });
 
   textSpan.addEventListener('keydown', (e) => {
@@ -76,11 +75,9 @@ const buildNote = (text) => {
 
   noteItem.addEventListener('dragstart', handleDragStart);
   noteItem.addEventListener('dragend', handleDragEnd);
-
   noteContent.appendChild(textSpan);
   noteContent.appendChild(deleteButton);
   noteItem.appendChild(noteContent);
-
   notesList.appendChild(noteItem);
 };
 
@@ -90,7 +87,6 @@ const buildNote = (text) => {
 
 function getElementAfterDrag(container, y) {
   const draggableElements = [...container.querySelectorAll('.note-item:not(.dragging)')];
-
   return draggableElements.reduce((closest, child) => {
     const box = child.getBoundingClientRect();
     const offset = y - box.top - box.height / 2;
@@ -103,10 +99,7 @@ function getElementAfterDrag(container, y) {
 }
 
 function handleDragStart(e) {
-  if (e.target.isContentEditable) {
-    e.preventDefault();
-    return;
-  }
+  if (e.target.isContentEditable) { e.preventDefault(); return; }
   draggedItem = this;
   setTimeout(() => this.classList.add('dragging'), 0);
   e.dataTransfer.setData('text/plain', this.dataset.id);
@@ -116,23 +109,17 @@ function handleDragEnd() {
   if (!draggedItem) return;
   draggedItem.classList.remove('dragging');
   const indicator = document.querySelector('.drop-indicator');
-  if (indicator) {
-    indicator.remove();
-  }
+  if (indicator) indicator.remove();
   draggedItem = null;
 }
 
 notesList.addEventListener('dragover', e => {
   e.preventDefault();
-  
   const afterElement = getElementAfterDrag(notesList, e.clientY);
-  
   const existingIndicator = document.querySelector('.drop-indicator');
   if (existingIndicator) existingIndicator.remove();
-
   const indicator = document.createElement('div');
   indicator.className = 'drop-indicator';
-
   if (afterElement == null) {
     notesList.appendChild(indicator);
   } else {
@@ -151,19 +138,34 @@ notesList.addEventListener('drop', e => {
 });
 
 // ================================
-// === Sorting & Initialization ===
+// === Search, Sort & Init ===
 // ================================
+
+function filterNotes() {
+  const searchTerm = noteInput.value.toLowerCase();
+  const notes = notesList.querySelectorAll('.note-item');
+  notes.forEach(noteItem => {
+    const textSpan = noteItem.querySelector('.note-text');
+    const noteText = textSpan.textContent.toLowerCase();
+    const isMatch = noteText.includes(searchTerm);
+    noteItem.classList.toggle('hidden', !isMatch);
+    if (isMatch && searchTerm) {
+      const regex = new RegExp(searchTerm, 'gi');
+      textSpan.innerHTML = textSpan.textContent.replace(regex, match => `<mark>${match}</mark>`);
+    } else {
+      textSpan.innerHTML = textSpan.textContent;
+    }
+  });
+}
 
 function sortNotes() {
   const method = sortMethodSelect.value;
   const notes = Array.from(notesList.querySelectorAll('.note-item'));
-
   notes.sort((a, b) => {
     const aText = a.querySelector('.note-text').textContent.toLowerCase();
     const bText = b.querySelector('.note-text').textContent.toLowerCase();
     const aTime = noteTimestamps[a.dataset.id];
     const bTime = noteTimestamps[b.dataset.id];
-
     switch (method) {
       case 'newest': return bTime - aTime;
       case 'oldest': return aTime - bTime;
@@ -172,29 +174,52 @@ function sortNotes() {
       default: return 0;
     }
   });
-
   notes.forEach(note => notesList.appendChild(note));
   saveNotes();
 }
 
-// NEW: A function to handle adding a note, reusable for both the button and Enter key.
 function addNote() {
   const userText = noteInput.value.trim();
-  if (userText === "") return; // Don't add empty notes
-  
+  if (userText === "") return;
   buildNote(userText);
   saveNotes();
   noteInput.value = "";
+  customPlaceholder.style.opacity = '1';
 }
 
-// MODIFIED: The button click now uses the reusable addNote function.
-addButton.addEventListener('click', addNote);
+function enterSearchMode() {
+  controlsContainer.classList.add('search-active');
+  customPlaceholder.textContent = "Type to search...";
+  noteInput.focus();
+  filterNotes();
+}
 
-// NEW: Event listener for the Enter key on the input field.
+function exitSearchMode() {
+  controlsContainer.classList.remove('search-active');
+  customPlaceholder.textContent = "Press Enter to add...";
+  noteInput.value = "";
+  filterNotes();
+}
+
 noteInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault(); // Prevents default form submission or newline
+  if (!controlsContainer.classList.contains('search-active') && e.key === 'Enter') {
+    e.preventDefault();
     addNote();
+  }
+});
+
+noteInput.addEventListener('input', () => {
+  customPlaceholder.style.opacity = noteInput.value ? '0' : '1';
+  if (controlsContainer.classList.contains('search-active')) {
+    filterNotes();
+  }
+});
+
+searchButton.addEventListener('click', () => {
+  if (controlsContainer.classList.contains('search-active')) {
+    exitSearchMode();
+  } else {
+    enterSearchMode();
   }
 });
 
@@ -206,7 +231,6 @@ function applySavedTheme() {
   }
 }
 
-// Initial Load
 document.addEventListener('DOMContentLoaded', () => {
   applySavedTheme();
   const savedNotes = JSON.parse(localStorage.getItem('notes') || '[]');
@@ -220,4 +244,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   sortMethodSelect.addEventListener('change', sortNotes);
+  
+  // MODIFIED: This now checks the state and toggles search mode.
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'f') {
+      e.preventDefault();
+      if (controlsContainer.classList.contains('search-active')) {
+        exitSearchMode();
+      } else {
+        enterSearchMode();
+      }
+    }
+  });
 });
