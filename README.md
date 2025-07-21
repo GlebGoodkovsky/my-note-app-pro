@@ -24,6 +24,8 @@ This application stores notes directly in your browser's `localStorage`. The dat
 -   **Manual & Automatic Sorting:** Drag notes to create a custom order, or use the dropdown to instantly sort by creation date or alphabetically.
 -   **Persistent Storage:** Notes and their order are automatically saved in the browser's `localStorage`.
 -   **Fully Responsive:** Works beautifully on desktop and mobile devices.
+-   **Integrated Search & Filter:** Quickly find notes by clicking the search/sort icon (🔍) or pressing `Ctrl + F`. The search/filter bar can be toggled on/off by clicking the icon or pressing `Ctrl + F` again.
+-   **Quick Note Creation:** Add new notes instantly by typing in the input field and pressing `Enter`.
 
 ---
 
@@ -43,11 +45,12 @@ This project uses fundamental web technologies, enhanced by a modern build proce
 
 1.  **Open the [Live Demo](https://glebgoodkovsky.github.io/my-note-app-pro/).**
 2.  **Change Theme:** Click the ☀️/🌙 icon in the top right.
-3.  **Add a Note:** Type in the input field and click "Add".
+3.  **Add a Note:** Type in the input field and click "Add" or simply press `Enter`.
 4.  **Edit a Note:** Click on the note text, make your changes, and click outside or press `Enter` to save.
 5.  **Reorder Notes:** Click and hold any note, then drag it up or down to a new position.
 6.  **Delete a Note:** Hover over a note and click the 🗑️ icon.
 7.  **Sort Notes:** Choose a new method from the dropdown menu to instantly re-sort the entire list.
+8.  **Toggle Search/Filter:** Click the search/sort icon (🔍) or press `Ctrl + F` to reveal/hide the search bar.
 
 ---
 
