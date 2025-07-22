@@ -74,11 +74,10 @@ body {
   opacity: 0;
 }
 
-/* MODIFIED: Replaced the 2px box-shadow with a 1px border for a thinner outline. */
 #controls-container.search-active #note-input {
   background-color: #f0fff0;
-  border: 1px solid #50c878; /* Thinner 1px green border */
-  box-shadow: none; /* Removed the thicker shadow */
+  border: 1px solid #50c878;
+  box-shadow: none;
 }
 
 /*
@@ -190,11 +189,12 @@ body {
 
 #notes-list li.note-item {
   display: flex;
-  align-items: center;
+  /* FIXED: Changed from 'center' to 'flex-start' to prevent vertical expansion issues. */
+  align-items: flex-start; 
   margin-top: 12px;
   transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease;
   transform: scale(1);
-  max-height: 100px;
+  max-height: 500px; /* Increased max-height for very long notes */
   cursor: grab;
 }
 
@@ -295,7 +295,6 @@ body.dark-mode { background-color: #121212; color: #e0e0e0; }
 body.dark-mode #controls-container { background-color: #1e1e1e; border: 1px solid #333; }
 body.dark-mode #note-input { background-color: #2c2c2c; border: 1px solid #333; color: #e0e0e0; }
 body.dark-mode #custom-placeholder { color: #888; }
-/* MODIFIED: Dark mode active search state also uses a thinner 1px border. */
 body.dark-mode #controls-container.search-active #note-input { background-color: #1b2f1b; border-color: #3b8e5a; box-shadow: none; }
 body.dark-mode #sort-method { background-color: #252525; color: #e0e0e0; border: 1px solid #444; }
 body.dark-mode .control-btn { background-color: #2a3a57; border: 1px solid #4a5f8a; color: #e0e0e0; }

@@ -59,9 +59,19 @@ const buildNote = (text) => {
     textSpan.focus();
   });
 
+  // MODIFIED: This listener now handles the empty note case.
   textSpan.addEventListener('blur', () => {
     noteContent.classList.remove('editing');
     textSpan.contentEditable = false;
+
+    // FIXED: Check if the note is empty after editing.
+    if (textSpan.textContent.trim() === "") {
+      // If it's empty, remove the note item completely.
+      noteItem.remove();
+      delete noteTimestamps[noteId];
+    }
+    
+    // Save the notes list (either with the updated note or after removing the empty one).
     saveNotes();
     filterNotes();
   });
@@ -245,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sortMethodSelect.addEventListener('change', sortNotes);
   
-  // MODIFIED: This now checks the state and toggles search mode.
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'f') {
       e.preventDefault();
