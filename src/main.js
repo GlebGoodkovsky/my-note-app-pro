@@ -59,29 +59,20 @@ const buildNote = (text) => {
     textSpan.focus();
   });
 
-  // MODIFIED: This listener now handles the empty note case.
   textSpan.addEventListener('blur', () => {
     noteContent.classList.remove('editing');
     textSpan.contentEditable = false;
-
-    // FIXED: Check if the note is empty after editing.
     if (textSpan.textContent.trim() === "") {
-      // If it's empty, remove the note item completely.
       noteItem.remove();
       delete noteTimestamps[noteId];
     }
-    
-    // Save the notes list (either with the updated note or after removing the empty one).
     saveNotes();
     filterNotes();
   });
 
-  textSpan.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      textSpan.blur();
-    }
-  });
+  // DELETED: The `textSpan.addEventListener('keydown', ...)` block was here.
+  // By removing it, the 'Enter' key no longer saves the note and instead
+  // performs its default action, which is to create a new line.
 
   noteItem.addEventListener('dragstart', handleDragStart);
   noteItem.addEventListener('dragend', handleDragEnd);
