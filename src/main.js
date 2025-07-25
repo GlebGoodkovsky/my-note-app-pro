@@ -7,10 +7,10 @@ const customPlaceholder = document.getElementById('custom-placeholder');
 
 const noteTimestamps = {};
 let draggedItem = null;
-
 let undoStack = [];
 let redoStack = [];
 const HISTORY_LIMIT = 50;
+let originalNoteOrder = []; // NEW: To store the order before a search
 
 // ================================
 // === History Management ===
@@ -31,28 +31,18 @@ function getCurrentState() {
 function saveStateAndNotes() {
   const currentState = getCurrentState();
   const lastState = undoStack[undoStack.length - 1];
-  if (JSON.stringify(lastState) === JSON.stringify(currentState)) {
-    return;
-  }
+  if (JSON.stringify(lastState) === JSON.stringify(currentState)) return;
   undoStack.push(currentState);
-  if (undoStack.length > HISTORY_LIMIT) {
-    undoStack.shift();
-  }
+  if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
   redoStack = [];
   localStorage.setItem('notes', JSON.stringify(currentState));
 }
 
-// MODIFIED: This function now identifies restored notes and triggers the animation.
 function renderState(stateToRender, previousState) {
   notesList.innerHTML = '';
   Object.keys(noteTimestamps).forEach(key => delete noteTimestamps[key]);
+  stateToRender.forEach(noteData => buildNote(noteData.text, noteData));
   
-  stateToRender.forEach(noteData => {
-    buildNote(noteData.text, noteData); 
-  });
-  
-  // --- NEW: Animation logic ---
-  // Find which notes were restored by comparing the new state to the previous one.
   const previousIds = new Set(previousState.map(note => note.id));
   const restoredNotes = stateToRender.filter(note => !previousIds.has(note.id));
 
@@ -60,10 +50,8 @@ function renderState(stateToRender, previousState) {
     const noteElement = notesList.querySelector(`.note-item[data-id="${note.id}"]`);
     if (noteElement) {
       const noteContent = noteElement.querySelector('.note-content');
-      // Use requestAnimationFrame to ensure the animation plays smoothly after rendering.
       requestAnimationFrame(() => {
         noteContent.classList.add('reappearing');
-        // Clean up the class after the animation finishes.
         noteContent.addEventListener('animationend', () => {
           noteContent.classList.remove('reappearing');
         }, { once: true });
@@ -203,14 +191,40 @@ notesList.addEventListener('drop', e => {
 // === Search, Sort & Init ===
 // ================================
 
+// NEW: Function to restore notes to their original order after a search.
+function restoreNaturalOrder() {
+  const fragment = document.createDocumentFragment();
+  originalNoteOrder.forEach(id => {
+    const noteItem = notesList.querySelector(`.note-item[data-id="${id}"]`);
+    if (noteItem) {
+      fragment.appendChild(noteItem);
+    }
+  });
+  notesList.appendChild(fragment);
+  // Remove hidden class from all notes
+  notesList.querySelectorAll('.hidden').forEach(note => note.classList.remove('hidden'));
+}
+
+// REWRITTEN: This function now handles reordering notes to the top.
 function filterNotes() {
   const searchTerm = noteInput.value.toLowerCase();
-  const notes = notesList.querySelectorAll('.note-item');
+  const notes = Array.from(notesList.querySelectorAll('.note-item'));
+  const matchingNotes = [];
+  const nonMatchingNotes = [];
+
+  // Separate notes into matching and non-matching groups
   notes.forEach(noteItem => {
     const textSpan = noteItem.querySelector('.note-text');
     const noteText = textSpan.textContent.toLowerCase();
     const isMatch = noteText.includes(searchTerm);
-    noteItem.classList.toggle('hidden', !isMatch);
+
+    if (isMatch) {
+      matchingNotes.push(noteItem);
+    } else {
+      nonMatchingNotes.push(noteItem);
+    }
+    
+    // Highlight logic remains the same
     if (isMatch && searchTerm) {
       const regex = new RegExp(searchTerm, 'gi');
       textSpan.innerHTML = textSpan.textContent.replace(regex, match => `<mark>${match}</mark>`);
@@ -218,7 +232,18 @@ function filterNotes() {
       textSpan.innerHTML = textSpan.textContent;
     }
   });
+
+  // Re-append notes to the list: matching first, then non-matching
+  const fragment = document.createDocumentFragment();
+  matchingNotes.forEach(note => fragment.appendChild(note));
+  nonMatchingNotes.forEach(note => fragment.appendChild(note));
+  notesList.appendChild(fragment);
+
+  // Toggle visibility
+  matchingNotes.forEach(note => note.classList.remove('hidden'));
+  nonMatchingNotes.forEach(note => note.classList.add('hidden'));
 }
+
 
 function sortNotes() {
   saveStateAndNotes();
@@ -251,6 +276,8 @@ function addNote() {
 }
 
 function enterSearchMode() {
+  // NEW: Save the current order right before starting the search.
+  originalNoteOrder = Array.from(notesList.querySelectorAll('.note-item')).map(item => item.dataset.id);
   controlsContainer.classList.add('search-active');
   customPlaceholder.textContent = "Type to search...";
   noteInput.focus();
@@ -261,7 +288,10 @@ function exitSearchMode() {
   controlsContainer.classList.remove('search-active');
   customPlaceholder.textContent = "Press Enter to add...";
   noteInput.value = "";
-  filterNotes();
+  // NEW: Instead of just filtering, restore the original order.
+  restoreNaturalOrder();
+  // Clear any leftover highlights.
+  filterNotes(); 
 }
 
 noteInput.addEventListener('keydown', (e) => {
@@ -327,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const previousState = undoStack.pop();
         redoStack.push(previousState);
         const stateToRender = undoStack[undoStack.length - 1];
-        renderState(stateToRender, previousState); // Pass both states
+        renderState(stateToRender, previousState);
       }
     } else if (isRedo) {
       e.preventDefault();
@@ -335,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const previousState = getCurrentState();
         const stateToRender = redoStack.pop();
         undoStack.push(stateToRender);
-        renderState(stateToRender, previousState); // Pass both states
+        renderState(stateToRender, previousState);
       }
     } else if ((isMac ? e.metaKey : e.ctrlKey) && e.key === 'f') {
       e.preventDefault();

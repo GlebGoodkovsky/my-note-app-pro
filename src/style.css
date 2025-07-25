@@ -191,6 +191,7 @@ body {
   display: flex;
   align-items: flex-start; 
   margin-top: 12px;
+  /* MODIFIED: Added `transform` to the transition property. This is the key to the smooth reordering animation. */
   transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease;
   transform: scale(1);
   max-height: 500px;
