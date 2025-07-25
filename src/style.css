@@ -133,6 +133,14 @@ body {
   cursor: pointer;
 }
 
+
+/* NEW: Style to visually separate the tags in the dropdown */
+.tag-option {
+  border-top: 1px solid #e0e0e0;
+  font-style: italic;
+  color: #337ab7;
+}
+
 .delete-btn {
   position: absolute;
   top: 50%;

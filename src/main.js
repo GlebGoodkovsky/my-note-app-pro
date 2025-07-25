@@ -10,7 +10,8 @@ let draggedItem = null;
 let undoStack = [];
 let redoStack = [];
 const HISTORY_LIMIT = 50;
-let originalNoteOrder = []; // NEW: To store the order before a search
+let originalNoteOrder = [];
+let activeTags = new Set(); // NEW: A set to store all unique, active hashtags.
 
 // ================================
 // === History Management ===
@@ -60,6 +61,43 @@ function renderState(stateToRender, previousState) {
   });
 
   localStorage.setItem('notes', JSON.stringify(stateToRender));
+  updateActiveTagsAndDropdown(); // NEW: Update tags after undo/redo
+}
+
+// ================================
+// === Tag Management (NEW) ===
+// ================================
+
+function updateActiveTagsAndDropdown() {
+  const newActiveTags = new Set();
+  const notes = notesList.querySelectorAll('.note-text');
+  const tagRegex = /#([a-zA-Z0-9_]+)/g; // Regex to find hashtags
+
+  notes.forEach(noteText => {
+    const matches = noteText.textContent.match(tagRegex);
+    if (matches) {
+      matches.forEach(tag => newActiveTags.add(tag.toLowerCase()));
+    }
+  });
+
+  activeTags = newActiveTags;
+  updateTagDropdown();
+}
+
+function updateTagDropdown() {
+  // First, remove any old tag options
+  sortMethodSelect.querySelectorAll('.tag-option').forEach(option => option.remove());
+
+  if (activeTags.size > 0) {
+    const sortedTags = Array.from(activeTags).sort();
+    sortedTags.forEach(tag => {
+      const option = document.createElement('option');
+      option.value = `tag:${tag}`;
+      option.textContent = tag;
+      option.className = 'tag-option';
+      sortMethodSelect.appendChild(option);
+    });
+  }
 }
 
 // ================================
@@ -99,6 +137,7 @@ const buildNote = (text, noteDataObject = null) => {
       noteItem.remove();
       delete noteTimestamps[noteId];
       saveStateAndNotes();
+      updateActiveTagsAndDropdown(); // Update tags after deleting
     });
   });
 
@@ -119,6 +158,7 @@ const buildNote = (text, noteDataObject = null) => {
       delete noteTimestamps[noteId];
     }
     saveStateAndNotes();
+    updateActiveTagsAndDropdown(); // Update tags after editing
     filterNotes();
   });
 
@@ -191,40 +231,14 @@ notesList.addEventListener('drop', e => {
 // === Search, Sort & Init ===
 // ================================
 
-// NEW: Function to restore notes to their original order after a search.
-function restoreNaturalOrder() {
-  const fragment = document.createDocumentFragment();
-  originalNoteOrder.forEach(id => {
-    const noteItem = notesList.querySelector(`.note-item[data-id="${id}"]`);
-    if (noteItem) {
-      fragment.appendChild(noteItem);
-    }
-  });
-  notesList.appendChild(fragment);
-  // Remove hidden class from all notes
-  notesList.querySelectorAll('.hidden').forEach(note => note.classList.remove('hidden'));
-}
-
-// REWRITTEN: This function now handles reordering notes to the top.
 function filterNotes() {
   const searchTerm = noteInput.value.toLowerCase();
-  const notes = Array.from(notesList.querySelectorAll('.note-item'));
-  const matchingNotes = [];
-  const nonMatchingNotes = [];
-
-  // Separate notes into matching and non-matching groups
+  const notes = notesList.querySelectorAll('.note-item');
   notes.forEach(noteItem => {
     const textSpan = noteItem.querySelector('.note-text');
     const noteText = textSpan.textContent.toLowerCase();
     const isMatch = noteText.includes(searchTerm);
-
-    if (isMatch) {
-      matchingNotes.push(noteItem);
-    } else {
-      nonMatchingNotes.push(noteItem);
-    }
-    
-    // Highlight logic remains the same
+    noteItem.classList.toggle('hidden', !isMatch);
     if (isMatch && searchTerm) {
       const regex = new RegExp(searchTerm, 'gi');
       textSpan.innerHTML = textSpan.textContent.replace(regex, match => `<mark>${match}</mark>`);
@@ -232,37 +246,50 @@ function filterNotes() {
       textSpan.innerHTML = textSpan.textContent;
     }
   });
-
-  // Re-append notes to the list: matching first, then non-matching
-  const fragment = document.createDocumentFragment();
-  matchingNotes.forEach(note => fragment.appendChild(note));
-  nonMatchingNotes.forEach(note => fragment.appendChild(note));
-  notesList.appendChild(fragment);
-
-  // Toggle visibility
-  matchingNotes.forEach(note => note.classList.remove('hidden'));
-  nonMatchingNotes.forEach(note => note.classList.add('hidden'));
 }
 
-
+// MODIFIED: This function is now a master controller for both sorting and tag filtering.
 function sortNotes() {
-  saveStateAndNotes();
   const method = sortMethodSelect.value;
+
+  // First, ensure all notes are visible and ordered naturally before applying any action
+  notesList.querySelectorAll('.note-item.hidden').forEach(n => n.classList.remove('hidden'));
   const notes = Array.from(notesList.querySelectorAll('.note-item'));
-  notes.sort((a, b) => {
-    const aText = a.querySelector('.note-text').textContent.toLowerCase();
-    const bText = b.querySelector('.note-text').textContent.toLowerCase();
-    const aTime = noteTimestamps[a.dataset.id];
-    const bTime = noteTimestamps[b.dataset.id];
-    switch (method) {
-      case 'newest': return bTime - aTime;
-      case 'oldest': return aTime - bTime;
-      case 'a-z': return aText.localeCompare(bText);
-      case 'z-a': return bText.localeCompare(aText);
-      default: return 0;
-    }
-  });
-  notes.forEach(note => notesList.appendChild(note));
+  notes.forEach(note => notesList.appendChild(note)); // A simple way to restore default order
+
+  if (method.startsWith('tag:')) {
+    const tag = method.substring(4);
+    const taggedNotes = [];
+    const otherNotes = [];
+    notes.forEach(note => {
+      if (note.querySelector('.note-text').textContent.toLowerCase().includes(tag)) {
+        taggedNotes.push(note);
+      } else {
+        otherNotes.push(note);
+      }
+    });
+    // Re-append to move tagged notes to the top
+    taggedNotes.forEach(note => notesList.appendChild(note));
+    otherNotes.forEach(note => notesList.appendChild(note));
+    // Hide the other notes
+    otherNotes.forEach(note => note.classList.add('hidden'));
+  } else {
+    // Standard sorting logic
+    notes.sort((a, b) => {
+      const aText = a.querySelector('.note-text').textContent.toLowerCase();
+      const bText = b.querySelector('.note-text').textContent.toLowerCase();
+      const aTime = noteTimestamps[a.dataset.id];
+      const bTime = noteTimestamps[b.dataset.id];
+      switch (method) {
+        case 'newest': return bTime - aTime;
+        case 'oldest': return aTime - bTime;
+        case 'a-z': return aText.localeCompare(bText);
+        case 'z-a': return bText.localeCompare(aText);
+        default: return 0;
+      }
+    });
+    notes.forEach(note => notesList.appendChild(note));
+  }
   saveStateAndNotes();
 }
 
@@ -271,12 +298,12 @@ function addNote() {
   if (userText === "") return;
   buildNote(userText);
   saveStateAndNotes();
+  updateActiveTagsAndDropdown(); // Update tags after adding a new note
   noteInput.value = "";
   customPlaceholder.style.opacity = '1';
 }
 
 function enterSearchMode() {
-  // NEW: Save the current order right before starting the search.
   originalNoteOrder = Array.from(notesList.querySelectorAll('.note-item')).map(item => item.dataset.id);
   controlsContainer.classList.add('search-active');
   customPlaceholder.textContent = "Type to search...";
@@ -288,9 +315,15 @@ function exitSearchMode() {
   controlsContainer.classList.remove('search-active');
   customPlaceholder.textContent = "Press Enter to add...";
   noteInput.value = "";
-  // NEW: Instead of just filtering, restore the original order.
-  restoreNaturalOrder();
-  // Clear any leftover highlights.
+  
+  const fragment = document.createDocumentFragment();
+  originalNoteOrder.forEach(id => {
+    const noteItem = notesList.querySelector(`.note-item[data-id="${id}"]`);
+    if (noteItem) fragment.appendChild(noteItem);
+  });
+  notesList.appendChild(fragment);
+
+  notesList.querySelectorAll('.hidden').forEach(note => note.classList.remove('hidden'));
   filterNotes(); 
 }
 
@@ -331,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
     buildNote(noteData.text, noteData);
   });
   
+  updateActiveTagsAndDropdown(); // Initial tag scan
   undoStack = [getCurrentState()];
   
   document.getElementById('theme-toggle').addEventListener('click', () => {
