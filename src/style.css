@@ -189,12 +189,11 @@ body {
 
 #notes-list li.note-item {
   display: flex;
-  /* FIXED: Changed from 'center' to 'flex-start' to prevent vertical expansion issues. */
   align-items: flex-start; 
   margin-top: 12px;
   transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease;
   transform: scale(1);
-  max-height: 500px; /* Increased max-height for very long notes */
+  max-height: 500px;
   cursor: grab;
 }
 
@@ -269,22 +268,36 @@ body {
 
 /*
   ================================
-  === Delete Animation ===
+  === Note Animations ===
   ================================
 */
+
+/* --- Delete Animation (Red) --- */
 @keyframes delete-highlight-light {
   from { background-color: #ffeaea; box-shadow: 0 0 0 2px #ff6b6b; transform: scale(1); opacity: 1; }
   to { background-color: #ffcccc; box-shadow: 0 0 0 4px #ff3b3b; transform: scale(0.95); opacity: 0; }
 }
-
 @keyframes delete-highlight-dark {
   from { background-color: #5c2a32; box-shadow: 0 0 0 2px #ff4d4d; transform: scale(1); opacity: 1; }
   to { background-color: #7a3434; box-shadow: 0 0 0 4px #ff1a1a; transform: scale(0.95); opacity: 0; }
 }
-
 .note-content.deleting {
   animation: delete-highlight-light 0.2s ease-out forwards !important;
 }
+
+/* --- Reappear Animation (Green) [NEW] --- */
+@keyframes reappear-highlight-light {
+  from { background-color: #d4edda; box-shadow: 0 0 0 4px #50c878; transform: scale(0.95); opacity: 0; }
+  to { background-color: #f0fff0; box-shadow: 0 0 0 0px #50c878; transform: scale(1); opacity: 1; }
+}
+@keyframes reappear-highlight-dark {
+  from { background-color: #1f4d30; box-shadow: 0 0 0 4px #3b8e5a; transform: scale(0.95); opacity: 0; }
+  to { background-color: #1b2f1b; box-shadow: 0 0 0 0px #3b8e5a; transform: scale(1); opacity: 1; }
+}
+.note-content.reappearing {
+  animation: reappear-highlight-light 0.3s ease-out forwards !important;
+}
+
 
 /*
   ================================
@@ -305,6 +318,8 @@ body.dark-mode .note-content:hover { background-color: #2c2c2c; }
 body.dark-mode .note-content.editing { background-color: #2a3a57 !important; box-shadow: 0 0 0 2px #5a9ce2 !important; }
 body.dark-mode #notes-list .note-content:hover .delete-btn { background-color: #5c2a32; }
 body.dark-mode .note-content.deleting { animation: delete-highlight-dark 0.2s ease-out forwards !important; }
+/* NEW: Dark mode version of the reappear animation */
+body.dark-mode .note-content.reappearing { animation: reappear-highlight-dark 0.3s ease-out forwards !important; }
 body.dark-mode .note-item.dragging .note-content { background-color: #423d22 !important; border-color: #FFD700 !important; }
 body.dark-mode .note-text mark { background-color: #b39700; }
 

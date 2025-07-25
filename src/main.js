@@ -28,36 +28,50 @@ function getCurrentState() {
   return noteData;
 }
 
-// REWRITTEN: This is the new, unified function for saving state.
 function saveStateAndNotes() {
   const currentState = getCurrentState();
-  
-  // Only save if the new state is different from the last one
   const lastState = undoStack[undoStack.length - 1];
   if (JSON.stringify(lastState) === JSON.stringify(currentState)) {
-    return; // Don't save identical states
+    return;
   }
-  
   undoStack.push(currentState);
   if (undoStack.length > HISTORY_LIMIT) {
     undoStack.shift();
   }
-  redoStack = []; // New action clears the redo stack
-  
-  // Save to localStorage as well
+  redoStack = [];
   localStorage.setItem('notes', JSON.stringify(currentState));
 }
 
-function renderState(state) {
+// MODIFIED: This function now identifies restored notes and triggers the animation.
+function renderState(stateToRender, previousState) {
   notesList.innerHTML = '';
-  // Clear old timestamp data before rebuilding
   Object.keys(noteTimestamps).forEach(key => delete noteTimestamps[key]);
   
-  state.forEach(noteData => {
+  stateToRender.forEach(noteData => {
     buildNote(noteData.text, noteData); 
   });
-  // After rendering, we sync localStorage, but we DON'T create a new history state.
-  localStorage.setItem('notes', JSON.stringify(state));
+  
+  // --- NEW: Animation logic ---
+  // Find which notes were restored by comparing the new state to the previous one.
+  const previousIds = new Set(previousState.map(note => note.id));
+  const restoredNotes = stateToRender.filter(note => !previousIds.has(note.id));
+
+  restoredNotes.forEach(note => {
+    const noteElement = notesList.querySelector(`.note-item[data-id="${note.id}"]`);
+    if (noteElement) {
+      const noteContent = noteElement.querySelector('.note-content');
+      // Use requestAnimationFrame to ensure the animation plays smoothly after rendering.
+      requestAnimationFrame(() => {
+        noteContent.classList.add('reappearing');
+        // Clean up the class after the animation finishes.
+        noteContent.addEventListener('animationend', () => {
+          noteContent.classList.remove('reappearing');
+        }, { once: true });
+      });
+    }
+  });
+
+  localStorage.setItem('notes', JSON.stringify(stateToRender));
 }
 
 // ================================
@@ -96,14 +110,13 @@ const buildNote = (text, noteDataObject = null) => {
     noteContent.addEventListener('animationend', () => {
       noteItem.remove();
       delete noteTimestamps[noteId];
-      // FIXED: Save state AFTER the note is removed from the DOM.
       saveStateAndNotes();
     });
   });
 
   noteContent.addEventListener('click', (e) => {
     if (e.target.closest('.delete-btn') || noteContent.classList.contains('editing')) return;
-    saveStateAndNotes(); // Save state before starting to edit.
+    saveStateAndNotes();
     textSpan.innerHTML = textSpan.textContent;
     noteContent.classList.add('editing');
     textSpan.contentEditable = true;
@@ -117,7 +130,7 @@ const buildNote = (text, noteDataObject = null) => {
       noteItem.remove();
       delete noteTimestamps[noteId];
     }
-    saveStateAndNotes(); // Save state after editing is finished.
+    saveStateAndNotes();
     filterNotes();
   });
 
@@ -148,7 +161,7 @@ function getElementAfterDrag(container, y) {
 
 function handleDragStart(e) {
   if (e.target.isContentEditable) { e.preventDefault(); return; }
-  saveStateAndNotes(); // Save state before starting a drag.
+  saveStateAndNotes();
   draggedItem = this;
   setTimeout(() => this.classList.add('dragging'), 0);
   e.dataTransfer.setData('text/plain', this.dataset.id);
@@ -181,7 +194,7 @@ notesList.addEventListener('drop', e => {
   const indicator = document.querySelector('.drop-indicator');
   if (indicator && draggedItem) {
     notesList.insertBefore(draggedItem, indicator);
-    saveStateAndNotes(); // Save state after a successful drop.
+    saveStateAndNotes();
   }
   if (indicator) indicator.remove();
 });
@@ -208,7 +221,7 @@ function filterNotes() {
 }
 
 function sortNotes() {
-  saveStateAndNotes(); // Save state before sorting.
+  saveStateAndNotes();
   const method = sortMethodSelect.value;
   const notes = Array.from(notesList.querySelectorAll('.note-item'));
   notes.sort((a, b) => {
@@ -225,14 +238,14 @@ function sortNotes() {
     }
   });
   notes.forEach(note => notesList.appendChild(note));
-  saveStateAndNotes(); // Save the new sorted state.
+  saveStateAndNotes();
 }
 
 function addNote() {
   const userText = noteInput.value.trim();
   if (userText === "") return;
   buildNote(userText);
-  saveStateAndNotes(); // Save state after adding a new note.
+  saveStateAndNotes();
   noteInput.value = "";
   customPlaceholder.style.opacity = '1';
 }
@@ -288,7 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
     buildNote(noteData.text, noteData);
   });
   
-  // Save the initial state when the app loads
   undoStack = [getCurrentState()];
   
   document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -300,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sortMethodSelect.addEventListener('change', sortNotes);
   
-  // FIXED: The Undo/Redo logic is now more robust.
   document.addEventListener('keydown', (e) => {
     if (e.target.isContentEditable || e.target.tagName === 'INPUT') {
         return;
@@ -313,15 +324,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isUndo) {
       e.preventDefault();
       if (undoStack.length > 1) {
-        redoStack.push(undoStack.pop());
-        renderState(undoStack[undoStack.length - 1]);
+        const previousState = undoStack.pop();
+        redoStack.push(previousState);
+        const stateToRender = undoStack[undoStack.length - 1];
+        renderState(stateToRender, previousState); // Pass both states
       }
     } else if (isRedo) {
       e.preventDefault();
       if (redoStack.length > 0) {
-        const nextState = redoStack.pop();
-        undoStack.push(nextState);
-        renderState(nextState);
+        const previousState = getCurrentState();
+        const stateToRender = redoStack.pop();
+        undoStack.push(stateToRender);
+        renderState(stateToRender, previousState); // Pass both states
       }
     } else if ((isMac ? e.metaKey : e.ctrlKey) && e.key === 'f') {
       e.preventDefault();
