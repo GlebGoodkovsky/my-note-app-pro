@@ -11,7 +11,7 @@ let undoStack = [];
 let redoStack = [];
 const HISTORY_LIMIT = 50;
 let originalNoteOrder = [];
-let activeTags = new Set(); // NEW: A set to store all unique, active hashtags.
+let activeTags = new Set();
 
 // ================================
 // === History Management ===
@@ -61,39 +61,78 @@ function renderState(stateToRender, previousState) {
   });
 
   localStorage.setItem('notes', JSON.stringify(stateToRender));
-  updateActiveTagsAndDropdown(); // NEW: Update tags after undo/redo
+  updateActiveTagsAndDropdown();
 }
 
 // ================================
-// === Tag Management (NEW) ===
+// === Tag & Syntax Management ===
 // ================================
+
+// NEW: This is our smart, unified function for applying all text styling.
+function applySyntaxHighlighting(textSpan, plainText, searchTerm) {
+  const tagRegex = /#([a-zA-Z0-9_]+)/g;
+  let html = plainText;
+
+  // First, wrap hashtags
+  html = html.replace(tagRegex, `<span class="tag-highlight">$&</span>`);
+  
+  // Then, if a search term exists, wrap it in a mark tag
+  if (searchTerm) {
+    // We must be careful not to replace text inside the HTML tags we just added.
+    // This regex looks for the search term but ignores any that are inside HTML tags.
+    const searchRegex = new RegExp(searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+    
+    // A temporary container to safely manipulate HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Walk through all text nodes and apply search highlighting
+    const textNodes = Array.from(tempDiv.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+    textNodes.forEach(node => {
+      const parent = node.parentNode;
+      const parts = node.textContent.split(searchRegex);
+      if (parts.length > 1) {
+        const matches = node.textContent.match(searchRegex);
+        const fragment = document.createDocumentFragment();
+        parts.forEach((part, index) => {
+          fragment.appendChild(document.createTextNode(part));
+          if (index < parts.length - 1) {
+            const mark = document.createElement('mark');
+            mark.textContent = matches[index];
+            fragment.appendChild(mark);
+          }
+        });
+        parent.replaceChild(fragment, node);
+      }
+    });
+    html = tempDiv.innerHTML;
+  }
+  
+  textSpan.innerHTML = html;
+}
 
 function updateActiveTagsAndDropdown() {
   const newActiveTags = new Set();
   const notes = notesList.querySelectorAll('.note-text');
-  const tagRegex = /#([a-zA-Z0-9_]+)/g; // Regex to find hashtags
-
+  const tagRegex = /#([a-zA-Z0-9_]+)/g;
   notes.forEach(noteText => {
     const matches = noteText.textContent.match(tagRegex);
     if (matches) {
       matches.forEach(tag => newActiveTags.add(tag.toLowerCase()));
     }
   });
-
   activeTags = newActiveTags;
   updateTagDropdown();
 }
 
 function updateTagDropdown() {
-  // First, remove any old tag options
   sortMethodSelect.querySelectorAll('.tag-option').forEach(option => option.remove());
-
   if (activeTags.size > 0) {
     const sortedTags = Array.from(activeTags).sort();
     sortedTags.forEach(tag => {
       const option = document.createElement('option');
       option.value = `tag:${tag}`;
-      option.textContent = tag;
+      option.textContent = `Filter: ${tag}`;
       option.className = 'tag-option';
       sortMethodSelect.appendChild(option);
     });
@@ -112,7 +151,9 @@ const buildNote = (text, noteDataObject = null) => {
   noteContent.className = 'note-content';
   const textSpan = document.createElement('span');
   textSpan.className = 'note-text';
-  textSpan.textContent = DOMPurify.sanitize(text);
+  
+  // MODIFIED: Use the new highlighter on creation
+  applySyntaxHighlighting(textSpan, DOMPurify.sanitize(text), '');
 
   let noteId, timestamp;
   if (noteDataObject) {
@@ -137,14 +178,14 @@ const buildNote = (text, noteDataObject = null) => {
       noteItem.remove();
       delete noteTimestamps[noteId];
       saveStateAndNotes();
-      updateActiveTagsAndDropdown(); // Update tags after deleting
+      updateActiveTagsAndDropdown();
     });
   });
 
   noteContent.addEventListener('click', (e) => {
     if (e.target.closest('.delete-btn') || noteContent.classList.contains('editing')) return;
     saveStateAndNotes();
-    textSpan.innerHTML = textSpan.textContent;
+    textSpan.innerHTML = textSpan.textContent; // Remove highlights for editing
     noteContent.classList.add('editing');
     textSpan.contentEditable = true;
     textSpan.focus();
@@ -158,8 +199,8 @@ const buildNote = (text, noteDataObject = null) => {
       delete noteTimestamps[noteId];
     }
     saveStateAndNotes();
-    updateActiveTagsAndDropdown(); // Update tags after editing
-    filterNotes();
+    updateActiveTagsAndDropdown();
+    filterNotes(); // Re-apply highlights after editing
   });
 
   noteItem.addEventListener('dragstart', handleDragStart);
@@ -231,31 +272,25 @@ notesList.addEventListener('drop', e => {
 // === Search, Sort & Init ===
 // ================================
 
+// MODIFIED: filterNotes now uses the smart highlighter
 function filterNotes() {
   const searchTerm = noteInput.value.toLowerCase();
-  const notes = notesList.querySelectorAll('.note-item');
-  notes.forEach(noteItem => {
+  notesList.querySelectorAll('.note-item').forEach(noteItem => {
     const textSpan = noteItem.querySelector('.note-text');
-    const noteText = textSpan.textContent.toLowerCase();
-    const isMatch = noteText.includes(searchTerm);
+    const noteText = textSpan.textContent;
+    const isMatch = noteText.toLowerCase().includes(searchTerm);
     noteItem.classList.toggle('hidden', !isMatch);
-    if (isMatch && searchTerm) {
-      const regex = new RegExp(searchTerm, 'gi');
-      textSpan.innerHTML = textSpan.textContent.replace(regex, match => `<mark>${match}</mark>`);
-    } else {
-      textSpan.innerHTML = textSpan.textContent;
-    }
+    
+    // Apply combined highlighting
+    applySyntaxHighlighting(textSpan, noteText, searchTerm);
   });
 }
 
-// MODIFIED: This function is now a master controller for both sorting and tag filtering.
 function sortNotes() {
   const method = sortMethodSelect.value;
-
-  // First, ensure all notes are visible and ordered naturally before applying any action
   notesList.querySelectorAll('.note-item.hidden').forEach(n => n.classList.remove('hidden'));
   const notes = Array.from(notesList.querySelectorAll('.note-item'));
-  notes.forEach(note => notesList.appendChild(note)); // A simple way to restore default order
+  notes.forEach(note => notesList.appendChild(note));
 
   if (method.startsWith('tag:')) {
     const tag = method.substring(4);
@@ -268,13 +303,10 @@ function sortNotes() {
         otherNotes.push(note);
       }
     });
-    // Re-append to move tagged notes to the top
     taggedNotes.forEach(note => notesList.appendChild(note));
     otherNotes.forEach(note => notesList.appendChild(note));
-    // Hide the other notes
     otherNotes.forEach(note => note.classList.add('hidden'));
   } else {
-    // Standard sorting logic
     notes.sort((a, b) => {
       const aText = a.querySelector('.note-text').textContent.toLowerCase();
       const bText = b.querySelector('.note-text').textContent.toLowerCase();
@@ -298,7 +330,7 @@ function addNote() {
   if (userText === "") return;
   buildNote(userText);
   saveStateAndNotes();
-  updateActiveTagsAndDropdown(); // Update tags after adding a new note
+  updateActiveTagsAndDropdown();
   noteInput.value = "";
   customPlaceholder.style.opacity = '1';
 }
@@ -364,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     buildNote(noteData.text, noteData);
   });
   
-  updateActiveTagsAndDropdown(); // Initial tag scan
+  updateActiveTagsAndDropdown();
   undoStack = [getCurrentState()];
   
   document.getElementById('theme-toggle').addEventListener('click', () => {
