@@ -8,11 +8,15 @@ const customPlaceholder = document.getElementById('custom-placeholder');
 const noteTimestamps = {};
 let draggedItem = null;
 
+let undoStack = [];
+let redoStack = [];
+const HISTORY_LIMIT = 50;
+
 // ================================
-// === Core Note Functions ===
+// === History Management ===
 // ================================
 
-const saveNotes = () => {
+function getCurrentState() {
   const noteData = [];
   notesList.querySelectorAll('.note-item').forEach(noteItem => {
     noteData.push({
@@ -21,10 +25,46 @@ const saveNotes = () => {
       timestamp: noteTimestamps[noteItem.dataset.id]
     });
   });
-  localStorage.setItem('notes', JSON.stringify(noteData));
-};
+  return noteData;
+}
 
-const buildNote = (text) => {
+// REWRITTEN: This is the new, unified function for saving state.
+function saveStateAndNotes() {
+  const currentState = getCurrentState();
+  
+  // Only save if the new state is different from the last one
+  const lastState = undoStack[undoStack.length - 1];
+  if (JSON.stringify(lastState) === JSON.stringify(currentState)) {
+    return; // Don't save identical states
+  }
+  
+  undoStack.push(currentState);
+  if (undoStack.length > HISTORY_LIMIT) {
+    undoStack.shift();
+  }
+  redoStack = []; // New action clears the redo stack
+  
+  // Save to localStorage as well
+  localStorage.setItem('notes', JSON.stringify(currentState));
+}
+
+function renderState(state) {
+  notesList.innerHTML = '';
+  // Clear old timestamp data before rebuilding
+  Object.keys(noteTimestamps).forEach(key => delete noteTimestamps[key]);
+  
+  state.forEach(noteData => {
+    buildNote(noteData.text, noteData); 
+  });
+  // After rendering, we sync localStorage, but we DON'T create a new history state.
+  localStorage.setItem('notes', JSON.stringify(state));
+}
+
+// ================================
+// === Core Note Functions ===
+// ================================
+
+const buildNote = (text, noteDataObject = null) => {
   const noteItem = document.createElement('li');
   noteItem.className = 'note-item';
   noteItem.draggable = true;
@@ -33,9 +73,19 @@ const buildNote = (text) => {
   const textSpan = document.createElement('span');
   textSpan.className = 'note-text';
   textSpan.textContent = DOMPurify.sanitize(text);
-  const noteId = 'note-' + Date.now();
+
+  let noteId, timestamp;
+  if (noteDataObject) {
+    noteId = noteDataObject.id;
+    timestamp = noteDataObject.timestamp;
+  } else {
+    noteId = 'note-' + Date.now();
+    timestamp = Date.now();
+  }
+
   noteItem.dataset.id = noteId;
-  noteTimestamps[noteId] = Date.now();
+  noteTimestamps[noteId] = timestamp;
+  
   const deleteButton = document.createElement('button');
   deleteButton.textContent = '🗑️';
   deleteButton.className = "delete-btn";
@@ -46,13 +96,14 @@ const buildNote = (text) => {
     noteContent.addEventListener('animationend', () => {
       noteItem.remove();
       delete noteTimestamps[noteId];
-      saveNotes();
+      // FIXED: Save state AFTER the note is removed from the DOM.
+      saveStateAndNotes();
     });
   });
 
   noteContent.addEventListener('click', (e) => {
-    if (e.target.closest('.delete-btn')) return;
-    if (noteContent.classList.contains('editing')) return;
+    if (e.target.closest('.delete-btn') || noteContent.classList.contains('editing')) return;
+    saveStateAndNotes(); // Save state before starting to edit.
     textSpan.innerHTML = textSpan.textContent;
     noteContent.classList.add('editing');
     textSpan.contentEditable = true;
@@ -66,13 +117,9 @@ const buildNote = (text) => {
       noteItem.remove();
       delete noteTimestamps[noteId];
     }
-    saveNotes();
+    saveStateAndNotes(); // Save state after editing is finished.
     filterNotes();
   });
-
-  // DELETED: The `textSpan.addEventListener('keydown', ...)` block was here.
-  // By removing it, the 'Enter' key no longer saves the note and instead
-  // performs its default action, which is to create a new line.
 
   noteItem.addEventListener('dragstart', handleDragStart);
   noteItem.addEventListener('dragend', handleDragEnd);
@@ -101,6 +148,7 @@ function getElementAfterDrag(container, y) {
 
 function handleDragStart(e) {
   if (e.target.isContentEditable) { e.preventDefault(); return; }
+  saveStateAndNotes(); // Save state before starting a drag.
   draggedItem = this;
   setTimeout(() => this.classList.add('dragging'), 0);
   e.dataTransfer.setData('text/plain', this.dataset.id);
@@ -133,9 +181,9 @@ notesList.addEventListener('drop', e => {
   const indicator = document.querySelector('.drop-indicator');
   if (indicator && draggedItem) {
     notesList.insertBefore(draggedItem, indicator);
+    saveStateAndNotes(); // Save state after a successful drop.
   }
   if (indicator) indicator.remove();
-  saveNotes();
 });
 
 // ================================
@@ -160,6 +208,7 @@ function filterNotes() {
 }
 
 function sortNotes() {
+  saveStateAndNotes(); // Save state before sorting.
   const method = sortMethodSelect.value;
   const notes = Array.from(notesList.querySelectorAll('.note-item'));
   notes.sort((a, b) => {
@@ -176,14 +225,14 @@ function sortNotes() {
     }
   });
   notes.forEach(note => notesList.appendChild(note));
-  saveNotes();
+  saveStateAndNotes(); // Save the new sorted state.
 }
 
 function addNote() {
   const userText = noteInput.value.trim();
   if (userText === "") return;
   buildNote(userText);
-  saveNotes();
+  saveStateAndNotes(); // Save state after adding a new note.
   noteInput.value = "";
   customPlaceholder.style.opacity = '1';
 }
@@ -235,7 +284,12 @@ function applySavedTheme() {
 document.addEventListener('DOMContentLoaded', () => {
   applySavedTheme();
   const savedNotes = JSON.parse(localStorage.getItem('notes') || '[]');
-  savedNotes.forEach(note => buildNote(note.text));
+  savedNotes.forEach(noteData => {
+    buildNote(noteData.text, noteData);
+  });
+  
+  // Save the initial state when the app loads
+  undoStack = [getCurrentState()];
   
   document.getElementById('theme-toggle').addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
@@ -246,8 +300,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sortMethodSelect.addEventListener('change', sortNotes);
   
+  // FIXED: The Undo/Redo logic is now more robust.
   document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.key === 'f') {
+    if (e.target.isContentEditable || e.target.tagName === 'INPUT') {
+        return;
+    }
+      
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isUndo = (isMac ? e.metaKey : e.ctrlKey) && e.key === 'z' && !e.shiftKey;
+    const isRedo = (isMac ? e.metaKey : e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey));
+
+    if (isUndo) {
+      e.preventDefault();
+      if (undoStack.length > 1) {
+        redoStack.push(undoStack.pop());
+        renderState(undoStack[undoStack.length - 1]);
+      }
+    } else if (isRedo) {
+      e.preventDefault();
+      if (redoStack.length > 0) {
+        const nextState = redoStack.pop();
+        undoStack.push(nextState);
+        renderState(nextState);
+      }
+    } else if ((isMac ? e.metaKey : e.ctrlKey) && e.key === 'f') {
       e.preventDefault();
       if (controlsContainer.classList.contains('search-active')) {
         exitSearchMode();
