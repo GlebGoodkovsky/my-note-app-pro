@@ -75,8 +75,8 @@ body {
 }
 
 #controls-container.search-active #note-input {
-  background-color: #f0fff0;
-  border: 1px solid #50c878;
+  background-color: #f3e5f5;         /* light purple */
+  border: 1px solid #ce93d8;         /* purple border */
   box-shadow: none;
 }
 
@@ -117,9 +117,9 @@ body {
 }
 
 #controls-container.search-active #search-button {
-  background-color: #d4edda;
-  border-color: #50c878;
-  color: #155724;
+  background-color: #f3e5f5;
+  border-color: #ce93d8;
+  color: #333;
 }
 
 #sort-method {
@@ -321,11 +321,22 @@ body.dark-mode { background-color: #121212; color: #e0e0e0; }
 body.dark-mode #controls-container { background-color: #1e1e1e; border: 1px solid #333; }
 body.dark-mode #note-input { background-color: #2c2c2c; border: 1px solid #333; color: #e0e0e0; }
 body.dark-mode #custom-placeholder { color: #888; }
-body.dark-mode #controls-container.search-active #note-input { background-color: #1b2f1b; border-color: #3b8e5a; box-shadow: none; }
-body.dark-mode #sort-method { background-color: #252525; color: #e0e0e0; border: 1px solid #444; }
-body.dark-mode .control-btn { background-color: #2a3a57; border: 1px solid #4a5f8a; color: #e0e0e0; }
+
+
+body.dark-mode #controls-container.search-active #note-input {
+  background-color: #2e1a47;         /* dark purple */
+  border-color: #8e24aa;
+  box-shadow: none;
+}
+
 body.dark-mode #search-button { background-color: #2c2c2c; border-color: #333; color: #aaa; }
-body.dark-mode #controls-container.search-active #search-button { background-color: #1f4d30; border-color: #3b8e5a; color: #c3e6cb; }
+
+body.dark-mode #controls-container.search-active #search-button {
+  background-color: #2e1a47;
+  border-color: #8e24aa;
+  color: #e0e0e0;
+}
+
 body.dark-mode .note-content { background-color: #1e1e1e; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border: 1px solid #333; }
 body.dark-mode .note-content:hover { background-color: #2c2c2c; }
 body.dark-mode .note-content.editing { background-color: #2a3a57 !important; box-shadow: 0 0 0 2px #5a9ce2 !important; }
@@ -337,6 +348,12 @@ body.dark-mode .note-text mark { background-color: #b39700; }
 body.dark-mode .tag-option { border-top-color: #333; color: #5a9ce2; }
 /* NEW: Dark mode style for the tag highlight */
 body.dark-mode .tag-highlight { background-color: #2c2c2c; border-color: #444; }
+
+body.dark-mode #sort-method {
+  background-color: #252525;   /* dark gray */
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
 
 /*
   ================================
