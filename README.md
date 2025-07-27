@@ -12,20 +12,45 @@ A clean, simple, and modern note-taking web application built with vanilla HTML,
 
 This application stores notes directly in your browser's `localStorage`. The data is **not encrypted**. For your own security, please do not store sensitive information such as passwords, personal identification numbers, or private keys.
 
+Below is the **updated README** (plain markdown) that adds every new feature you’ve shipped since the last official copy.
+
+Simply **append** the new bullets under the relevant headings.
+
 ---
 
-## ✨ Features
+## ✨ New Features & Polish
 
--   **Clean & Modern UI:** Simple interface with rounded corners and subtle shadows.
--   **Dark/Light Mode:** Toggle between themes with a click. Your preference is saved.
--   **Drag & Drop Reordering:** Easily reorder your notes by clicking and dragging them into a new position.
--   **Full CRUD Functionality:** Create, Read, Update, and Delete notes.
--   **In-Place Editing:** Click on the note text to edit its content directly.
--   **Manual & Automatic Sorting:** Drag notes to create a custom order, or use the dropdown to instantly sort by creation date or alphabetically.
--   **Persistent Storage:** Notes and their order are automatically saved in the browser's `localStorage`.
--   **Fully Responsive:** Works beautifully on desktop and mobile devices.
--   **Integrated Search & Filter:** Quickly find notes by clicking the search/sort icon (🔍) or pressing `Ctrl + F`. The search/filter bar can be toggled on/off by clicking the icon or pressing `Ctrl + F` again.
--   **Quick Note Creation:** Add new notes instantly by typing in the input field and pressing `Enter`.
+- **Pastel Hashtag Colors**  
+  Every unique `#tag` receives its own gentle pastel color; identical tags keep the same hue across sessions.
+
+- **Purple Search Theme**  
+  When the search bar is active, both the input field and the 🔍 search button switch to a consistent purple accent in light and dark modes.
+
+- **Improved Dark-Mode Legibility**  
+  Text inside colored hashtag badges is now black while in dark mode, making tags easier to read.
+
+- **Rapid Search & Highlight**  
+  Real-time highlighting of search terms inside notes, plus persistent tag-based filtering from the sort dropdown.
+
+- **Undo / Redo Shortcuts**  
+  Use Ctrl + Z / Ctrl + Y (Cmd + Z / Cmd + Shift + Z on macOS) to step backward or forward through note changes.
+
+- **Keyboard Search Toggle**  
+  Press Ctrl + F (or Cmd + F) to show / hide the search bar without clicking.
+
+- **Responsive Drag Handle**  
+  On mobile, a subtle `⋮⋮` indicator appears so users know notes are draggable.
+
+- **Empty-State Message**  
+  A friendly “No notes yet – start typing!” prompt shows when the list is blank.
+
+---
+
+## 🛠️ Additional Tech Details
+
+- **Security**: All note content is sanitized with [DOMPurify](https://github.com/cure53/DOMPurify) before rendering to prevent XSS.  
+- **Performance**: Input debouncing and virtualized re-rendering keep the UI snappy with large note sets.  
+- **Accessibility**: Emoji buttons now have `aria-label`s and all interactive elements are keyboard-reachable.
 
 ---
 
