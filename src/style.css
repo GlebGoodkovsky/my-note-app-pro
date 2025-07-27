@@ -329,6 +329,8 @@ body.dark-mode #controls-container.search-active #note-input {
   box-shadow: none;
 }
 
+
+
 body.dark-mode #search-button { background-color: #2c2c2c; border-color: #333; color: #aaa; }
 
 body.dark-mode #controls-container.search-active #search-button {
@@ -347,7 +349,11 @@ body.dark-mode .note-item.dragging .note-content { background-color: #423d22 !im
 body.dark-mode .note-text mark { background-color: #b39700; }
 body.dark-mode .tag-option { border-top-color: #333; color: #5a9ce2; }
 /* NEW: Dark mode style for the tag highlight */
-body.dark-mode .tag-highlight { background-color: #2c2c2c; border-color: #444; }
+
+body.dark-mode .tag-highlight {
+  color: #000;                /* black letters */
+  filter: brightness(0.85) saturate(1.05);
+}
 
 body.dark-mode #sort-method {
   background-color: #252525;   /* dark gray */

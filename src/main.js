@@ -29,6 +29,25 @@ function getCurrentState() {
   return noteData;
 }
 
+
+// --- Tag color helper ---
+const getTagColor = (() => {
+  const cache = new Map();
+  return (tag) => {
+    if (!cache.has(tag)) {
+      let hash = 0;
+      for (let i = 0; i < tag.length; i++) {
+        hash = ((hash << 5) - hash + tag.charCodeAt(i)) & 0xffffff;
+      }
+      const hue = hash % 360;          // 0-359
+      const pastel = `hsl(${hue}, 70%, 80%)`;
+      cache.set(tag, pastel);
+    }
+    return cache.get(tag);
+  };
+})();
+
+
 function saveStateAndNotes() {
   const currentState = getCurrentState();
   const lastState = undoStack[undoStack.length - 1];
@@ -74,8 +93,12 @@ function applySyntaxHighlighting(textSpan, plainText, searchTerm) {
   let html = plainText;
 
   // First, wrap hashtags
-  html = html.replace(tagRegex, `<span class="tag-highlight">$&</span>`);
   
+html = html.replace(tagRegex, (match) => {
+    const color = getTagColor(match.toLowerCase());
+    return `<span class="tag-highlight" style="background-color:${color};">${match}</span>`;
+  });
+
   // Then, if a search term exists, wrap it in a mark tag
   if (searchTerm) {
     // We must be careful not to replace text inside the HTML tags we just added.
