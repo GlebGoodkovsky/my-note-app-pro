@@ -311,7 +311,6 @@ body {
   animation: reappear-highlight-light 0.3s ease-out forwards !important;
 }
 
-
 /*
   ================================
   === Dark Mode Styles ===
@@ -322,14 +321,11 @@ body.dark-mode #controls-container { background-color: #1e1e1e; border: 1px soli
 body.dark-mode #note-input { background-color: #2c2c2c; border: 1px solid #333; color: #e0e0e0; }
 body.dark-mode #custom-placeholder { color: #888; }
 
-
 body.dark-mode #controls-container.search-active #note-input {
   background-color: #2e1a47;         /* dark purple */
   border-color: #8e24aa;
   box-shadow: none;
 }
-
-
 
 body.dark-mode #search-button { background-color: #2c2c2c; border-color: #333; color: #aaa; }
 
@@ -359,6 +355,22 @@ body.dark-mode #sort-method {
   background-color: #252525;   /* dark gray */
   color: #e0e0e0;
   border: 1px solid #444;
+}
+
+body.dark-mode #export-button, body.dark-mode #import-button {
+  background-color: #2a3a57; /* Dark mode background */
+  border: 1px solid #4a5f8a; /* Dark mode border */
+  color: #e0e0e0; /* Dark mode text color */
+}
+
+body.dark-mode #export-button:hover, body.dark-mode #import-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode #export-button:active, body.dark-mode #import-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 /*

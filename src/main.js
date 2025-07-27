@@ -295,18 +295,42 @@ notesList.addEventListener('drop', e => {
 // === Search, Sort & Init ===
 // ================================
 
-// MODIFIED: filterNotes now uses the smart highlighter
 function filterNotes() {
   const searchTerm = noteInput.value.toLowerCase();
-  notesList.querySelectorAll('.note-item').forEach(noteItem => {
-    const textSpan = noteItem.querySelector('.note-text');
+  const notes = Array.from(notesList.querySelectorAll('.note-item'));
+
+  // Filter and sort notes: matching notes first, then non-matching notes
+  notes.sort((a, b) => {
+    const aText = a.querySelector('.note-text').textContent.toLowerCase();
+    const bText = b.querySelector('.note-text').textContent.toLowerCase();
+    const aMatches = aText.includes(searchTerm);
+    const bMatches = bText.includes(searchTerm);
+    if (aMatches && !bMatches) return -1;
+    if (!aMatches && bMatches) return 1;
+    return 0;
+  });
+
+  // Clear the current list
+  notesList.innerHTML = '';
+
+  // Re-add notes in the new order
+  notes.forEach(note => {
+    const textSpan = note.querySelector('.note-text');
     const noteText = textSpan.textContent;
     const isMatch = noteText.toLowerCase().includes(searchTerm);
-    noteItem.classList.toggle('hidden', !isMatch);
-    
+
     // Apply combined highlighting
     applySyntaxHighlighting(textSpan, noteText, searchTerm);
+
+    // Toggle the 'hidden' class based on whether the note matches the search term
+    note.classList.toggle('hidden', !isMatch);
+
+    // Re-add the note to the list
+    notesList.appendChild(note);
   });
+
+  // Save the current state
+  saveStateAndNotes();
 }
 
 function sortNotes() {
@@ -421,7 +445,56 @@ document.addEventListener('DOMContentLoaded', () => {
   
   updateActiveTagsAndDropdown();
   undoStack = [getCurrentState()];
-  
+ 
+
+
+
+// Existing code
+
+// --- Export Notes ---
+document.getElementById('export-button').addEventListener('click', () => {
+  const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+  const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'notes.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// --- Import Notes ---
+document.getElementById('import-button').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedNotes = JSON.parse(e.target.result);
+          // Clear existing notes
+          localStorage.removeItem('notes');
+          // Save imported notes
+          localStorage.setItem('notes', JSON.stringify(importedNotes));
+          // Reload the app to display the new notes
+          location.reload();
+        } catch (error) {
+          alert('Invalid JSON file. Please try again.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+  input.click();
+});
+
+// Existing code
+
+
+
   document.getElementById('theme-toggle').addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
     const isDarkMode = document.body.classList.contains('dark-mode');
