@@ -1,9 +1,14 @@
-const noteInput = document.getElementById('note-input');
+const addButton = document.getElementById('add-button');
 const searchButton = document.getElementById('search-button');
 const notesList = document.getElementById('notes-list');
 const sortMethodSelect = document.getElementById('sort-method');
 const controlsContainer = document.getElementById('controls-container');
-const customPlaceholder = document.getElementById('custom-placeholder');
+const spotlightOverlay = document.getElementById('spotlight-overlay');
+const spotlightModal = document.getElementById('spotlight-modal');
+const spotlightInput = document.getElementById('spotlight-input');
+const spotlightPlaceholder = document.getElementById('spotlight-placeholder');
+const spotlightResults = document.getElementById('spotlight-results');
+const spotlightModeText = document.getElementById('spotlight-mode-text');
 
 const noteTimestamps = {};
 let draggedItem = null;
@@ -12,6 +17,11 @@ let redoStack = [];
 const HISTORY_LIMIT = 50;
 let originalNoteOrder = [];
 let activeTags = new Set();
+
+// Spotlight modal variables
+let spotlightMode = 'add'; // 'add' or 'search'
+let selectedResultIndex = -1;
+let filteredResults = [];
 
 // ================================
 // === History Management ===
@@ -29,7 +39,6 @@ function getCurrentState() {
   return noteData;
 }
 
-
 // --- Tag color helper ---
 const getTagColor = (() => {
   const cache = new Map();
@@ -46,7 +55,6 @@ const getTagColor = (() => {
     return cache.get(tag);
   };
 })();
-
 
 function saveStateAndNotes() {
   const currentState = getCurrentState();
@@ -93,8 +101,7 @@ function applySyntaxHighlighting(textSpan, plainText, searchTerm) {
   let html = plainText;
 
   // First, wrap hashtags
-  
-html = html.replace(tagRegex, (match) => {
+  html = html.replace(tagRegex, (match) => {
     const color = getTagColor(match.toLowerCase());
     return `<span class="tag-highlight" style="background-color:${color};">${match}</span>`;
   });
@@ -163,6 +170,187 @@ function updateTagDropdown() {
 }
 
 // ================================
+// === Spotlight Modal Management ===
+// ================================
+
+function openSpotlight(mode) {
+  spotlightMode = mode;
+  selectedResultIndex = -1;
+  
+  // Update UI based on mode
+  if (mode === 'add') {
+    spotlightPlaceholder.textContent = 'Type to add a note...';
+    spotlightModeText.textContent = 'Add Mode';
+  } else {
+    spotlightPlaceholder.textContent = 'Search your notes...';
+    spotlightModeText.textContent = 'Search Mode';
+  }
+  
+  // Clear input and results
+  spotlightInput.value = '';
+  spotlightResults.innerHTML = '';
+  
+  // Show modal with animation
+  spotlightOverlay.classList.add('show');
+  setTimeout(() => spotlightInput.focus(), 150);
+  
+  // If search mode, populate initial results
+  if (mode === 'search') {
+    showAllNotes();
+  }
+}
+
+function closeSpotlight() {
+  spotlightOverlay.classList.remove('show');
+  selectedResultIndex = -1;
+  filteredResults = [];
+}
+
+function showAllNotes() {
+  const notes = Array.from(notesList.querySelectorAll('.note-item'));
+  filteredResults = notes;
+  renderSearchResults(notes, '');
+}
+
+function renderSearchResults(notes, searchTerm) {
+  spotlightResults.innerHTML = '';
+  
+  if (notes.length === 0 && searchTerm) {
+    spotlightResults.innerHTML = `
+      <div class="spotlight-result-item">
+        <div class="spotlight-result-icon">📝</div>
+        <div class="spotlight-result-text">No notes found for "${searchTerm}"</div>
+      </div>
+    `;
+    return;
+  }
+  
+  notes.forEach((note, index) => {
+    const noteText = note.querySelector('.note-text').textContent;
+    const resultItem = document.createElement('div');
+    resultItem.className = 'spotlight-result-item';
+    resultItem.dataset.index = index;
+    
+    // Highlight search term
+    let displayText = noteText;
+    if (searchTerm) {
+      const regex = new RegExp(`(${searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+      displayText = noteText.replace(regex, '<mark>$1</mark>');
+    }
+    
+    // Apply tag highlighting
+    const tagRegex = /#([a-zA-Z0-9_]+)/g;
+    displayText = displayText.replace(tagRegex, (match) => {
+      const color = getTagColor(match.toLowerCase());
+      return `<span class="tag-highlight" style="background-color:${color};">${match}</span>`;
+    });
+    
+    resultItem.innerHTML = `
+      <div class="spotlight-result-icon">📝</div>
+      <div class="spotlight-result-text">${displayText}</div>
+    `;
+    
+    // Add click handler
+    resultItem.addEventListener('click', () => {
+      selectSearchResult(index);
+    });
+    
+    spotlightResults.appendChild(resultItem);
+  });
+}
+
+function selectSearchResult(index) {
+  if (filteredResults[index]) {
+    const noteItem = filteredResults[index];
+    closeSpotlight();
+    
+    // Scroll to and highlight the selected note
+    noteItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const noteContent = noteItem.querySelector('.note-content');
+    noteContent.style.transition = 'all 0.3s ease';
+    noteContent.style.backgroundColor = '#e3f2fd';
+    noteContent.style.boxShadow = '0 0 0 3px #2196f3';
+    
+    setTimeout(() => {
+      noteContent.style.backgroundColor = '';
+      noteContent.style.boxShadow = '';
+    }, 2000);
+  }
+}
+
+function updateSelectedResult(direction) {
+  const results = spotlightResults.querySelectorAll('.spotlight-result-item');
+  if (results.length === 0) return;
+  
+  // Remove previous selection
+  results.forEach(item => item.classList.remove('selected'));
+  
+  // Update index
+  if (direction === 'down') {
+    selectedResultIndex = Math.min(selectedResultIndex + 1, results.length - 1);
+  } else {
+    selectedResultIndex = Math.max(selectedResultIndex - 1, -1);
+  }
+  
+  // Apply new selection
+  if (selectedResultIndex >= 0) {
+    results[selectedResultIndex].classList.add('selected');
+    results[selectedResultIndex].scrollIntoView({ block: 'nearest' });
+  }
+}
+
+function handleSpotlightInput() {
+  const query = spotlightInput.value.trim();
+  
+  if (spotlightMode === 'search') {
+    selectedResultIndex = -1;
+    
+    if (query === '') {
+      showAllNotes();
+    } else {
+      // Filter notes based on search query
+      const allNotes = Array.from(notesList.querySelectorAll('.note-item'));
+      const filtered = allNotes.filter(note => {
+        const noteText = note.querySelector('.note-text').textContent.toLowerCase();
+        return noteText.includes(query.toLowerCase());
+      });
+      
+      filteredResults = filtered;
+      renderSearchResults(filtered, query);
+    }
+  }
+}
+
+function handleSpotlightKeydown(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    closeSpotlight();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    
+    if (spotlightMode === 'add') {
+      const text = spotlightInput.value.trim();
+      if (text) {
+        buildNote(text);
+        saveStateAndNotes();
+        updateActiveTagsAndDropdown();
+        closeSpotlight();
+      }
+    } else if (spotlightMode === 'search') {
+      if (selectedResultIndex >= 0) {
+        selectSearchResult(selectedResultIndex);
+      }
+    }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    updateSelectedResult('down');
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    updateSelectedResult('up');
+  }
+}
+
+// ================================
 // === Core Note Functions ===
 // ================================
 
@@ -223,7 +411,8 @@ const buildNote = (text, noteDataObject = null) => {
     }
     saveStateAndNotes();
     updateActiveTagsAndDropdown();
-    filterNotes(); // Re-apply highlights after editing
+    // Re-apply syntax highlighting after editing
+    applySyntaxHighlighting(textSpan, textSpan.textContent, '');
   });
 
   noteItem.addEventListener('dragstart', handleDragStart);
@@ -292,46 +481,8 @@ notesList.addEventListener('drop', e => {
 });
 
 // ================================
-// === Search, Sort & Init ===
+// === Sort Functions ===
 // ================================
-
-function filterNotes() {
-  const searchTerm = noteInput.value.toLowerCase();
-  const notes = Array.from(notesList.querySelectorAll('.note-item'));
-
-  // Filter and sort notes: matching notes first, then non-matching notes
-  notes.sort((a, b) => {
-    const aText = a.querySelector('.note-text').textContent.toLowerCase();
-    const bText = b.querySelector('.note-text').textContent.toLowerCase();
-    const aMatches = aText.includes(searchTerm);
-    const bMatches = bText.includes(searchTerm);
-    if (aMatches && !bMatches) return -1;
-    if (!aMatches && bMatches) return 1;
-    return 0;
-  });
-
-  // Clear the current list
-  notesList.innerHTML = '';
-
-  // Re-add notes in the new order
-  notes.forEach(note => {
-    const textSpan = note.querySelector('.note-text');
-    const noteText = textSpan.textContent;
-    const isMatch = noteText.toLowerCase().includes(searchTerm);
-
-    // Apply combined highlighting
-    applySyntaxHighlighting(textSpan, noteText, searchTerm);
-
-    // Toggle the 'hidden' class based on whether the note matches the search term
-    note.classList.toggle('hidden', !isMatch);
-
-    // Re-add the note to the list
-    notesList.appendChild(note);
-  });
-
-  // Save the current state
-  saveStateAndNotes();
-}
 
 function sortNotes() {
   const method = sortMethodSelect.value;
@@ -372,61 +523,49 @@ function sortNotes() {
   saveStateAndNotes();
 }
 
-function addNote() {
-  const userText = noteInput.value.trim();
-  if (userText === "") return;
-  buildNote(userText);
-  saveStateAndNotes();
-  updateActiveTagsAndDropdown();
-  noteInput.value = "";
-  customPlaceholder.style.opacity = '1';
-}
+// ================================
+// === Event Listeners Setup ===
+// ================================
 
-function enterSearchMode() {
-  originalNoteOrder = Array.from(notesList.querySelectorAll('.note-item')).map(item => item.dataset.id);
-  controlsContainer.classList.add('search-active');
-  customPlaceholder.textContent = "Type to search...";
-  noteInput.focus();
-  filterNotes();
-}
+// Spotlight modal event listeners
+addButton.addEventListener('click', () => openSpotlight('add'));
+searchButton.addEventListener('click', () => openSpotlight('search'));
 
-function exitSearchMode() {
-  controlsContainer.classList.remove('search-active');
-  customPlaceholder.textContent = "Press Enter to add...";
-  noteInput.value = "";
-  
-  const fragment = document.createDocumentFragment();
-  originalNoteOrder.forEach(id => {
-    const noteItem = notesList.querySelector(`.note-item[data-id="${id}"]`);
-    if (noteItem) fragment.appendChild(noteItem);
-  });
-  notesList.appendChild(fragment);
+spotlightInput.addEventListener('input', handleSpotlightInput);
+spotlightInput.addEventListener('keydown', handleSpotlightKeydown);
 
-  notesList.querySelectorAll('.hidden').forEach(note => note.classList.remove('hidden'));
-  filterNotes(); 
-}
-
-noteInput.addEventListener('keydown', (e) => {
-  if (!controlsContainer.classList.contains('search-active') && e.key === 'Enter') {
-    e.preventDefault();
-    addNote();
+// Close modal when clicking overlay
+spotlightOverlay.addEventListener('click', (e) => {
+  if (e.target === spotlightOverlay) {
+    closeSpotlight();
   }
 });
 
-noteInput.addEventListener('input', () => {
-  customPlaceholder.style.opacity = noteInput.value ? '0' : '1';
-  if (controlsContainer.classList.contains('search-active')) {
-    filterNotes();
+// Prevent modal from closing when clicking inside
+spotlightModal.addEventListener('click', (e) => {
+  e.stopPropagation();
+});
+
+// Update placeholder visibility
+spotlightInput.addEventListener('input', () => {
+  spotlightPlaceholder.style.opacity = spotlightInput.value ? '0' : '1';
+});
+
+spotlightInput.addEventListener('focus', () => {
+  if (!spotlightInput.value) {
+    spotlightPlaceholder.style.opacity = '0';
   }
 });
 
-searchButton.addEventListener('click', () => {
-  if (controlsContainer.classList.contains('search-active')) {
-    exitSearchMode();
-  } else {
-    enterSearchMode();
+spotlightInput.addEventListener('blur', () => {
+  if (!spotlightInput.value) {
+    spotlightPlaceholder.style.opacity = '1';
   }
 });
+
+// ================================
+// === Initialization ===
+// ================================
 
 function applySavedTheme() {
   const savedTheme = localStorage.getItem('theme');
@@ -445,56 +584,48 @@ document.addEventListener('DOMContentLoaded', () => {
   
   updateActiveTagsAndDropdown();
   undoStack = [getCurrentState()];
- 
 
+  // --- Export Notes ---
+  document.getElementById('export-button').addEventListener('click', () => {
+    const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+    const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'notes.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
 
+  // --- Import Notes ---
+  document.getElementById('import-button').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const importedNotes = JSON.parse(e.target.result);
+            // Clear existing notes
+            localStorage.removeItem('notes');
+            // Save imported notes
+            localStorage.setItem('notes', JSON.stringify(importedNotes));
+            // Reload the app to display the new notes
+            location.reload();
+          } catch (error) {
+            alert('Invalid JSON file. Please try again.');
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  });
 
-// Existing code
-
-// --- Export Notes ---
-document.getElementById('export-button').addEventListener('click', () => {
-  const notes = JSON.parse(localStorage.getItem('notes') || '[]');
-  const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'notes.json';
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-// --- Import Notes ---
-document.getElementById('import-button').addEventListener('click', () => {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const importedNotes = JSON.parse(e.target.result);
-          // Clear existing notes
-          localStorage.removeItem('notes');
-          // Save imported notes
-          localStorage.setItem('notes', JSON.stringify(importedNotes));
-          // Reload the app to display the new notes
-          location.reload();
-        } catch (error) {
-          alert('Invalid JSON file. Please try again.');
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-  input.click();
-});
-
-// Existing code
-
-
-
+  // Theme toggle
   document.getElementById('theme-toggle').addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
     const isDarkMode = document.body.classList.contains('dark-mode');
@@ -502,8 +633,10 @@ document.getElementById('import-button').addEventListener('click', () => {
     document.getElementById('theme-toggle').textContent = isDarkMode ? '🌙' : '☀️';
   });
 
+  // Sort method change
   sortMethodSelect.addEventListener('change', sortNotes);
   
+  // Global keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (e.target.isContentEditable || e.target.tagName === 'INPUT') {
         return;
@@ -531,11 +664,10 @@ document.getElementById('import-button').addEventListener('click', () => {
       }
     } else if ((isMac ? e.metaKey : e.ctrlKey) && e.key === 'f') {
       e.preventDefault();
-      if (controlsContainer.classList.contains('search-active')) {
-        exitSearchMode();
-      } else {
-        enterSearchMode();
-      }
+      openSpotlight('search');
+    } else if ((isMac ? e.metaKey : e.ctrlKey) && e.key === 'n') {
+      e.preventDefault();
+      openSpotlight('add');
     }
   });
 });

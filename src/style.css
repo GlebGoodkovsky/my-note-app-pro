@@ -27,57 +27,17 @@ body {
 #controls-container {
   background-color: #f5f5f5;
   margin: 20px 0;
-  padding: 15px;
+  padding: 15px 20px;
   border-radius: 40px;
   border: 1px solid #e3e3e3;
-  width: 80%;
+  width: auto;
+  min-width: 400px;
   max-width: 650px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 10px;
-}
-
-/*
-  ================================
-  === Note Input / Search Bar ===
-  ================================
-*/
-.input-wrapper {
-  position: relative;
-  flex: 1;
-  display: flex;
-}
-
-#note-input {
-  width: 100%;
-  padding: 10px 15px;
-  border-radius: 20px;
-  background-color: #e9e9e9;
-  border: 1px solid #e0e0e0;
-  transition: all 0.3s ease;
-  color: #333;
-}
-
-#custom-placeholder {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #888;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-#note-input:not(:placeholder-shown) + #custom-placeholder {
-  opacity: 0;
-}
-
-#controls-container.search-active #note-input {
-  background-color: #f3e5f5;         /* light purple */
-  border: 1px solid #ce93d8;         /* purple border */
-  box-shadow: none;
 }
 
 /*
@@ -105,21 +65,21 @@ body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-#search-button {
-  background-color: #e9e9e9;
-  border-color: #e0e0e0;
-  color: #555;
-}
-
-#search-button:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-#controls-container.search-active #search-button {
-  background-color: #f3e5f5;
-  border-color: #ce93d8;
+/* Consistent blue styling for add and search buttons */
+#add-button, #search-button {
+  background-color: #e0edff;
+  border: 1px solid #9fa8ff;
   color: #333;
+}
+
+#add-button:hover, #search-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#add-button:active, #search-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 #sort-method {
@@ -313,26 +273,271 @@ body {
 
 /*
   ================================
+  === Spotlight Modal Styles ===
+  ================================
+*/
+
+.spotlight-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 15vh;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spotlight-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.spotlight-modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 
+              0 0 0 1px rgba(255, 255, 255, 0.5);
+  width: 90%;
+  max-width: 600px;
+  max-height: 70vh;
+  overflow: hidden;
+  transform: scale(0.8) translateY(-20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spotlight-overlay.show .spotlight-modal {
+  transform: scale(1) translateY(0);
+}
+
+.spotlight-input-wrapper {
+  position: relative;
+  padding: 25px 30px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+#spotlight-input {
+  width: 100%;
+  font-size: 24px;
+  font-weight: 300;
+  border: none;
+  background: transparent;
+  color: #333;
+  padding: 0;
+  line-height: 1.3;
+}
+
+#spotlight-input:focus {
+  outline: none;
+}
+
+#spotlight-placeholder {
+  position: absolute;
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  font-weight: 300;
+  color: #999;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#spotlight-input:not(:placeholder-shown) + #spotlight-placeholder,
+#spotlight-input:focus + #spotlight-placeholder {
+  opacity: 0;
+}
+
+.spotlight-results {
+  max-height: 40vh;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.spotlight-result-item {
+  padding: 15px 30px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.spotlight-result-item:hover,
+.spotlight-result-item.selected {
+  background-color: rgba(74, 144, 226, 0.1);
+}
+
+.spotlight-result-item:last-child {
+  border-bottom: none;
+}
+
+.spotlight-result-icon {
+  width: 20px;
+  height: 20px;
+  background-color: #4a90e2;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.spotlight-result-text {
+  flex-grow: 1;
+  font-size: 16px;
+  color: #333;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.spotlight-result-text mark {
+  background-color: #ffd000;
+  color: #000;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.spotlight-hint {
+  padding: 15px 30px;
+  background-color: rgba(0, 0, 0, 0.03);
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+#spotlight-mode-text {
+  font-weight: 500;
+  color: #4a90e2;
+}
+
+/* Dark mode styles for spotlight */
+body.dark-mode .spotlight-overlay {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .spotlight-modal {
+  background: rgba(30, 30, 30, 0.95);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 
+              0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .spotlight-input-wrapper {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode #spotlight-input {
+  color: #e0e0e0;
+}
+
+body.dark-mode #spotlight-placeholder {
+  color: #888;
+}
+
+body.dark-mode .spotlight-result-item {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .spotlight-result-item:hover,
+body.dark-mode .spotlight-result-item.selected {
+  background-color: rgba(90, 156, 226, 0.2);
+}
+
+body.dark-mode .spotlight-result-text {
+  color: #e0e0e0;
+}
+
+body.dark-mode .spotlight-result-text mark {
+  background-color: #b39700;
+  color: #fff;
+}
+
+body.dark-mode .spotlight-hint {
+  background-color: rgba(255, 255, 255, 0.03);
+  color: #aaa;
+  border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode #spotlight-mode-text {
+  color: #5a9ce2;
+}
+
+/* Smooth scrollbar for results */
+.spotlight-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.spotlight-results::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.spotlight-results::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+body.dark-mode .spotlight-results::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Animation for result items */
+.spotlight-result-item {
+  animation: fadeInUp 0.3s ease-out forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger animation for multiple results */
+.spotlight-result-item:nth-child(1) { animation-delay: 0.05s; }
+.spotlight-result-item:nth-child(2) { animation-delay: 0.1s; }
+.spotlight-result-item:nth-child(3) { animation-delay: 0.15s; }
+.spotlight-result-item:nth-child(4) { animation-delay: 0.2s; }
+.spotlight-result-item:nth-child(5) { animation-delay: 0.25s; }
+
+/*
+  ================================
   === Dark Mode Styles ===
   ================================
 */
 body.dark-mode { background-color: #121212; color: #e0e0e0; }
 body.dark-mode #controls-container { background-color: #1e1e1e; border: 1px solid #333; }
-body.dark-mode #note-input { background-color: #2c2c2c; border: 1px solid #333; color: #e0e0e0; }
-body.dark-mode #custom-placeholder { color: #888; }
 
-body.dark-mode #controls-container.search-active #note-input {
-  background-color: #2e1a47;         /* dark purple */
-  border-color: #8e24aa;
-  box-shadow: none;
+/* Dark mode button styling - consistent blue theme */
+body.dark-mode #add-button, body.dark-mode #search-button {
+  background-color: #2a3a57;
+  border: 1px solid #4a5f8a;
+  color: #e0e0e0;
 }
 
-body.dark-mode #search-button { background-color: #2c2c2c; border-color: #333; color: #aaa; }
+body.dark-mode #add-button:hover, body.dark-mode #search-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
-body.dark-mode #controls-container.search-active #search-button {
-  background-color: #2e1a47;
-  border-color: #8e24aa;
-  color: #e0e0e0;
+body.dark-mode #add-button:active, body.dark-mode #search-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 body.dark-mode .note-content { background-color: #1e1e1e; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border: 1px solid #333; }
@@ -379,7 +584,7 @@ body.dark-mode #export-button:active, body.dark-mode #import-button:active {
   ================================
 */
 @media (max-width: 600px) {
-  #controls-container { flex-wrap: nowrap; padding: 8px 12px; gap: 6px; }
-  #sort-method, .control-btn, #note-input { padding: 8px 10px; font-size: 13px; min-width: 0; }
+  #controls-container { flex-wrap: nowrap; padding: 8px 12px; gap: 6px; min-width: 300px; }
+  #sort-method, .control-btn { padding: 8px 10px; font-size: 13px; min-width: 0; }
   #sort-method { max-width: 115px; }
 }

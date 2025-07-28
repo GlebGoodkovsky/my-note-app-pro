@@ -23,13 +23,10 @@
                 <option value="z-a">Z-A</option>
             </select>
         </div>
-        <div class="input-wrapper">
-          <input id="note-input" placeholder="">
-          <span id="custom-placeholder">Press Enter to add...</span>
-        </div>
-        <button id="search-button" class="control-btn">🔍</button>
+          <button id="add-button" class="control-btn">➕</button>
+          <button id="search-button" class="control-btn">🔍</button>
 
-	<!-- Add these buttons inside the #controls-container -->
+      <!-- Add these buttons inside the #controls-container -->
 	<button id="export-button" class="control-btn">Export</button>
 	<button id="import-button" class="control-btn">Import</button>
 
@@ -37,5 +34,20 @@
 
     <ul id="notes-list"></ul>
     <script type="module" src="/src/main.js"></script>
+
+    <!-- Spotlight Modal -->
+<div id="spotlight-overlay" class="spotlight-overlay">
+  <div id="spotlight-modal" class="spotlight-modal">
+    <div class="spotlight-input-wrapper">
+      <input id="spotlight-input" placeholder="" autocomplete="off">
+      <span id="spotlight-placeholder">Type to add a note...</span>
+    </div>
+    <div id="spotlight-results" class="spotlight-results"></div>
+    <div class="spotlight-hint">
+      <span id="spotlight-mode-text">Add Mode</span> • Press Enter to add • Escape to cancel
+    </div>
+  </div>
+</div>
+
   </body>
 </html>
