@@ -22,6 +22,7 @@ let activeTags = new Set();
 let spotlightMode = 'add'; // 'add' or 'search'
 let selectedResultIndex = -1;
 let filteredResults = [];
+let searchTimeout = null;
 
 // ================================
 // === History Management ===
@@ -305,18 +306,33 @@ function handleSpotlightInput() {
   if (spotlightMode === 'search') {
     selectedResultIndex = -1;
     
+    // Clear any existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+      searchTimeout = null;
+    }
+    
     if (query === '') {
+      // Show all notes immediately when search is cleared
       showAllNotes();
     } else {
-      // Filter notes based on search query
-      const allNotes = Array.from(notesList.querySelectorAll('.note-item'));
-      const filtered = allNotes.filter(note => {
-        const noteText = note.querySelector('.note-text').textContent.toLowerCase();
-        return noteText.includes(query.toLowerCase());
-      });
-      
-      filteredResults = filtered;
-      renderSearchResults(filtered, query);
+      // Add debounce delay for search queries
+      searchTimeout = setTimeout(() => {
+        console.log('🔍 Searching for:', query);
+        
+        // Filter notes based on search query
+        const allNotes = Array.from(notesList.querySelectorAll('.note-item'));
+        const filtered = allNotes.filter(note => {
+          const noteText = note.querySelector('.note-text').textContent.toLowerCase();
+          return noteText.includes(query.toLowerCase());
+        });
+        
+        filteredResults = filtered;
+        renderSearchResults(filtered, query);
+        
+        // Clear the timeout reference
+        searchTimeout = null;
+      }, 200);
     }
   }
 }
