@@ -11,6 +11,7 @@ const spotlightResults = document.getElementById('spotlight-results');
 const spotlightModeText = document.getElementById('spotlight-mode-text');
 
 const noteTimestamps = {};
+const pinnedNotes = new Set(); // Track pinned notes
 let draggedItem = null;
 let undoStack = [];
 let redoStack = [];
@@ -34,7 +35,8 @@ function getCurrentState() {
     noteData.push({
       text: noteItem.querySelector('.note-text').textContent,
       id: noteItem.dataset.id,
-      timestamp: noteTimestamps[noteItem.dataset.id]
+      timestamp: noteTimestamps[noteItem.dataset.id],
+      pinned: pinnedNotes.has(noteItem.dataset.id)
     });
   });
   return noteData;
@@ -65,12 +67,20 @@ function saveStateAndNotes() {
   if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
   redoStack = [];
   localStorage.setItem('notes', JSON.stringify(currentState));
+  localStorage.setItem('pinnedNotes', JSON.stringify([...pinnedNotes]));
 }
 
 function renderState(stateToRender, previousState) {
   notesList.innerHTML = '';
   Object.keys(noteTimestamps).forEach(key => delete noteTimestamps[key]);
-  stateToRender.forEach(noteData => buildNote(noteData.text, noteData));
+  pinnedNotes.clear();
+  
+  stateToRender.forEach(noteData => {
+    buildNote(noteData.text, noteData);
+    if (noteData.pinned) {
+      pinnedNotes.add(noteData.id);
+    }
+  });
   
   const previousIds = new Set(previousState.map(note => note.id));
   const restoredNotes = stateToRender.filter(note => !previousIds.has(note.id));
@@ -89,7 +99,35 @@ function renderState(stateToRender, previousState) {
   });
 
   localStorage.setItem('notes', JSON.stringify(stateToRender));
+  localStorage.setItem('pinnedNotes', JSON.stringify([...pinnedNotes]));
   updateActiveTagsAndDropdown();
+  sortNotes(); // Re-sort to maintain pin order
+}
+
+// ================================
+// === Pin Management ===
+// ================================
+
+function togglePin(noteId) {
+  const noteItem = document.querySelector(`.note-item[data-id="${noteId}"]`);
+  const pinButton = noteItem.querySelector('.pin-btn');
+  
+  if (pinnedNotes.has(noteId)) {
+    // Unpin
+    pinnedNotes.delete(noteId);
+    pinButton.textContent = '📍';
+    pinButton.title = 'Pin note';
+    noteItem.classList.remove('pinned');
+  } else {
+    // Pin
+    pinnedNotes.add(noteId);
+    pinButton.textContent = '📌';
+    pinButton.title = 'Unpin note';
+    noteItem.classList.add('pinned');
+  }
+  
+  saveStateAndNotes();
+  sortNotes(); // Re-sort to move pinned notes to top
 }
 
 // ================================
@@ -228,6 +266,7 @@ function renderSearchResults(notes, searchTerm) {
   
   notes.forEach((note, index) => {
     const noteText = note.querySelector('.note-text').textContent;
+    const isPinned = pinnedNotes.has(note.dataset.id);
     const resultItem = document.createElement('div');
     resultItem.className = 'spotlight-result-item';
     resultItem.dataset.index = index;
@@ -247,7 +286,7 @@ function renderSearchResults(notes, searchTerm) {
     });
     
     resultItem.innerHTML = `
-      <div class="spotlight-result-icon">📝</div>
+      <div class="spotlight-result-icon">${isPinned ? '📌' : '📝'}</div>
       <div class="spotlight-result-text">${displayText}</div>
     `;
     
@@ -382,10 +421,11 @@ const buildNote = (text, noteDataObject = null) => {
   // MODIFIED: Use the new highlighter on creation
   applySyntaxHighlighting(textSpan, DOMPurify.sanitize(text), '');
 
-  let noteId, timestamp;
+  let noteId, timestamp, isPinned = false;
   if (noteDataObject) {
     noteId = noteDataObject.id;
     timestamp = noteDataObject.timestamp;
+    isPinned = noteDataObject.pinned || false;
   } else {
     noteId = 'note-' + Date.now();
     timestamp = Date.now();
@@ -393,6 +433,22 @@ const buildNote = (text, noteDataObject = null) => {
 
   noteItem.dataset.id = noteId;
   noteTimestamps[noteId] = timestamp;
+  
+  if (isPinned) {
+    pinnedNotes.add(noteId);
+    noteItem.classList.add('pinned');
+  }
+  
+  // Create pin button
+  const pinButton = document.createElement('button');
+  pinButton.textContent = isPinned ? '📌' : '📍';
+  pinButton.className = "pin-btn";
+  pinButton.title = isPinned ? 'Unpin note' : 'Pin note';
+
+  pinButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePin(noteId);
+  });
   
   const deleteButton = document.createElement('button');
   deleteButton.textContent = '🗑️';
@@ -404,13 +460,14 @@ const buildNote = (text, noteDataObject = null) => {
     noteContent.addEventListener('animationend', () => {
       noteItem.remove();
       delete noteTimestamps[noteId];
+      pinnedNotes.delete(noteId);
       saveStateAndNotes();
       updateActiveTagsAndDropdown();
     });
   });
 
   noteContent.addEventListener('click', (e) => {
-    if (e.target.closest('.delete-btn') || noteContent.classList.contains('editing')) return;
+    if (e.target.closest('.delete-btn') || e.target.closest('.pin-btn') || noteContent.classList.contains('editing')) return;
     saveStateAndNotes();
     textSpan.innerHTML = textSpan.textContent; // Remove highlights for editing
     noteContent.classList.add('editing');
@@ -424,6 +481,7 @@ const buildNote = (text, noteDataObject = null) => {
     if (textSpan.textContent.trim() === "") {
       noteItem.remove();
       delete noteTimestamps[noteId];
+      pinnedNotes.delete(noteId);
     }
     saveStateAndNotes();
     updateActiveTagsAndDropdown();
@@ -434,6 +492,7 @@ const buildNote = (text, noteDataObject = null) => {
   noteItem.addEventListener('dragstart', handleDragStart);
   noteItem.addEventListener('dragend', handleDragEnd);
   noteContent.appendChild(textSpan);
+  noteContent.appendChild(pinButton);
   noteContent.appendChild(deleteButton);
   noteItem.appendChild(noteContent);
   notesList.appendChild(noteItem);
@@ -504,25 +563,39 @@ function sortNotes() {
   const method = sortMethodSelect.value;
   notesList.querySelectorAll('.note-item.hidden').forEach(n => n.classList.remove('hidden'));
   const notes = Array.from(notesList.querySelectorAll('.note-item'));
-  notes.forEach(note => notesList.appendChild(note));
+  
+  // Separate pinned and unpinned notes
+  const pinnedNoteElements = notes.filter(note => pinnedNotes.has(note.dataset.id));
+  const unpinnedNoteElements = notes.filter(note => !pinnedNotes.has(note.dataset.id));
 
   if (method.startsWith('tag:')) {
     const tag = method.substring(4);
-    const taggedNotes = [];
-    const otherNotes = [];
+    const taggedPinned = [];
+    const taggedUnpinned = [];
+    const otherPinned = [];
+    const otherUnpinned = [];
+    
     notes.forEach(note => {
-      if (note.querySelector('.note-text').textContent.toLowerCase().includes(tag)) {
-        taggedNotes.push(note);
-      } else {
-        otherNotes.push(note);
-      }
+      const isPinned = pinnedNotes.has(note.dataset.id);
+      const hasTag = note.querySelector('.note-text').textContent.toLowerCase().includes(tag);
+      
+      if (hasTag && isPinned) taggedPinned.push(note);
+      else if (hasTag && !isPinned) taggedUnpinned.push(note);
+      else if (!hasTag && isPinned) otherPinned.push(note);
+      else otherUnpinned.push(note);
     });
-    taggedNotes.forEach(note => notesList.appendChild(note));
-    otherNotes.forEach(note => notesList.appendChild(note));
-    otherNotes.forEach(note => note.classList.add('hidden'));
+    
+    // Append in order: tagged pinned, tagged unpinned, other pinned (hidden), other unpinned (hidden)
+    [...taggedPinned, ...taggedUnpinned, ...otherPinned, ...otherUnpinned].forEach(note => {
+      notesList.appendChild(note);
+    });
+    
+    // Hide non-tagged notes
+    [...otherPinned, ...otherUnpinned].forEach(note => note.classList.add('hidden'));
   } else {
-    notes.sort((a, b) => {
-      const aText = a.querySelector('.note-text').textContent.toLowerCase();
+    // Sort pinned and unpinned separately
+    const sortFunction = (a, b) => {
+      const aText = a.querySelector('.note-text').textContent.toLowerCase();  
       const bText = b.querySelector('.note-text').textContent.toLowerCase();
       const aTime = noteTimestamps[a.dataset.id];
       const bTime = noteTimestamps[b.dataset.id];
@@ -533,8 +606,15 @@ function sortNotes() {
         case 'z-a': return bText.localeCompare(aText);
         default: return 0;
       }
+    };
+    
+    pinnedNoteElements.sort(sortFunction);
+    unpinnedNoteElements.sort(sortFunction);
+    
+    // Append pinned notes first, then unpinned
+    [...pinnedNoteElements, ...unpinnedNoteElements].forEach(note => {
+      notesList.appendChild(note);
     });
-    notes.forEach(note => notesList.appendChild(note));
   }
   saveStateAndNotes();
 }
@@ -593,12 +673,18 @@ function applySavedTheme() {
 
 document.addEventListener('DOMContentLoaded', () => {
   applySavedTheme();
+  
+  // Load pinned notes
+  const savedPinnedNotes = JSON.parse(localStorage.getItem('pinnedNotes') || '[]');
+  savedPinnedNotes.forEach(noteId => pinnedNotes.add(noteId));
+  
   const savedNotes = JSON.parse(localStorage.getItem('notes') || '[]');
   savedNotes.forEach(noteData => {
     buildNote(noteData.text, noteData);
   });
   
   updateActiveTagsAndDropdown();
+  sortNotes(); // Sort to ensure pinned notes are at the top
   undoStack = [getCurrentState()];
 
   // --- Export Notes ---
@@ -627,6 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const importedNotes = JSON.parse(e.target.result);
             // Clear existing notes
             localStorage.removeItem('notes');
+            localStorage.removeItem('pinnedNotes');
             // Save imported notes
             localStorage.setItem('notes', JSON.stringify(importedNotes));
             // Reload the app to display the new notes

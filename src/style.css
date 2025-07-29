@@ -99,6 +99,25 @@ body {
   color: #337ab7;
 }
 
+.pin-btn {
+  position: absolute;
+  top: 50%;
+  right: 55px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.3s ease;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 16px;
+}
+
 .delete-btn {
   position: absolute;
   top: 50%;
@@ -121,6 +140,11 @@ body {
 #notes-list .note-content:hover .delete-btn {
   opacity: 1;
   background-color: #fcdee2;
+}
+
+#notes-list .note-content:hover .pin-btn {
+  opacity: 1;
+  background-color: #fff3cd;
 }
 
 #theme-toggle {
@@ -171,6 +195,23 @@ body {
   pointer-events: none;
 }
 
+.note-item.pinned {
+  position: relative;
+}
+
+.note-item.pinned::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(135deg, #ffd700, #ffed4a);
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+  z-index: 1;
+}
+
 .note-content {
   flex-grow: 1;
   border-radius: 40px;
@@ -181,7 +222,13 @@ body {
   position: relative;
   width: 100%;
   overflow: hidden;
-  padding: 0 50px 0 20px;
+  padding: 0 90px 0 20px;
+}
+
+.note-item.pinned .note-content {
+  background: linear-gradient(135deg, #fffbf0 0%, #fff8e7 100%);
+  border-color: #f0d000;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.15);
 }
 
 .note-text {
@@ -213,6 +260,10 @@ body {
 .note-content:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+}
+
+.note-item.pinned .note-content:hover {
+  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.25);
 }
 
 .note-content.editing {
@@ -544,13 +595,30 @@ body.dark-mode .note-content { background-color: #1e1e1e; box-shadow: 0 4px 8px 
 body.dark-mode .note-content:hover { background-color: #2c2c2c; }
 body.dark-mode .note-content.editing { background-color: #2a3a57 !important; box-shadow: 0 0 0 2px #5a9ce2 !important; }
 body.dark-mode #notes-list .note-content:hover .delete-btn { background-color: #5c2a32; }
+body.dark-mode #notes-list .note-content:hover .pin-btn { background-color: #4a3c1a; }
 body.dark-mode .note-content.deleting { animation: delete-highlight-dark 0.2s ease-out forwards !important; }
 body.dark-mode .note-content.reappearing { animation: reappear-highlight-dark 0.3s ease-out forwards !important; }
 body.dark-mode .note-item.dragging .note-content { background-color: #423d22 !important; border-color: #FFD700 !important; }
 body.dark-mode .note-text mark { background-color: #b39700; }
 body.dark-mode .tag-option { border-top-color: #333; color: #5a9ce2; }
-/* NEW: Dark mode style for the tag highlight */
 
+/* Dark mode pinned notes */
+body.dark-mode .note-item.pinned .note-content {
+  background: linear-gradient(135deg, #2a2416 0%, #322a1a 100%);
+  border-color: #b8860b;
+  box-shadow: 0 4px 12px rgba(184, 134, 11, 0.2);
+}
+
+body.dark-mode .note-item.pinned .note-content:hover {
+  box-shadow: 0 5px 15px rgba(184, 134, 11, 0.3);
+}
+
+body.dark-mode .note-item.pinned::before {
+  background: linear-gradient(135deg, #b8860b, #daa520);
+  box-shadow: 0 0 8px rgba(184, 134, 11, 0.5);
+}
+
+/* NEW: Dark mode style for the tag highlight */
 body.dark-mode .tag-highlight {
   color: #000;                /* black letters */
   filter: brightness(0.85) saturate(1.05);
@@ -587,4 +655,22 @@ body.dark-mode #export-button:active, body.dark-mode #import-button:active {
   #controls-container { flex-wrap: nowrap; padding: 8px 12px; gap: 6px; min-width: 300px; }
   #sort-method, .control-btn { padding: 8px 10px; font-size: 13px; min-width: 0; }
   #sort-method { max-width: 115px; }
+  
+  .note-content {
+    padding: 0 100px 0 15px;
+  }
+  
+  .pin-btn {
+    right: 50px;
+    width: 25px;
+    height: 25px;
+    font-size: 14px;
+  }
+  
+  .delete-btn {
+    right: 12px;
+    width: 25px;
+    height: 25px;
+    font-size: 16px;
+  }
 }
