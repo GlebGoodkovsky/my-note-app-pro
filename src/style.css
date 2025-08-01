@@ -144,21 +144,22 @@ body.dark-mode #controls-container {
 body.dark-mode .note-content {
   border-bottom-color: var(--border-color-dark);
 }
-.note-item:hover .note-content {
+/* NEW, IMPROVED CODE */
+.note-item .note-content:hover {
   background-color: var(--accent-bg-light);
 }
-body.dark-mode .note-item:hover .note-content {
+body.dark-mode .note-item .note-content:hover {
   background-color: var(--accent-bg-dark);
 }
 
 .note-item.active .note-content {
   background-color: var(--accent-bg-light);
-  box-shadow: inset 4px 0 0 0 var(--accent-color-light);
-  padding-left: 11px;
+  box-shadow: inset 3px 0 0 0 var(--accent-color-light); /* Slightly thinner line */
+  padding-left: 12px;
 }
 body.dark-mode .note-item.active .note-content {
   background-color: var(--accent-bg-dark);
-  box-shadow: inset 4px 0 0 0 var(--accent-color-dark);
+  box-shadow: inset 3px 0 0 0 var(--accent-color-dark);
 }
 
 .note-text {
@@ -183,10 +184,17 @@ body.dark-mode .note-item.active .note-content {
   font-size: 14px;
 }
 
-.note-item .pin-btn, .note-item .delete-btn { display: none; }
-.note-item:hover .pin-btn, .note-item:hover .delete-btn { display: flex; }
+/* NEW, IMPROVED CODE */
+.note-item .pin-btn,
+.note-item .delete-btn {
+  opacity: 0.4; /* Make them visible but faded out */
+  transition: opacity 0.2s ease;
+}
 
-
+.note-item:hover .pin-btn,
+.note-item:hover .delete-btn {
+  opacity: 1; /* Make them fully visible on hover */
+}
 /*
   ================================
   === 4. Main Content & Editor ===
