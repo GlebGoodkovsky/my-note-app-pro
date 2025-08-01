@@ -2,10 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
+
+    <!-- 🔒 CONTENT SECURITY POLICY (CSP) - Your App's Force Field -->
+    <!-- This locks down your app, only allowing scripts and styles from your own domain. -->
+    <!-- It blocks inline scripts, remote sources, plugins, and framing to prevent XSS and Clickjacking attacks. -->
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self';
+                   script-src 'self';
+                   style-src 'self';
+                   object-src 'none';
+                   frame-ancestors 'none';
+                   base-uri 'none';">
+
+    <!-- 🔐 PERMISSIONS POLICY - Disabling Dangerous Browser Features -->
+    <!-- Your note app doesn't need a camera, microphone, or location services. -->
+    <!-- This explicitly turns them off so they can't be exploited. -->
+    <meta http-equiv="Permissions-Policy" 
+          content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), autoplay=()">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Note App Pro</title>
     <link rel="stylesheet" href="/src/style.css"> 
-    <!-- This is the new line you need to add -->
     <link rel="stylesheet" href="/src/animations.css">
   </head>
   <body>

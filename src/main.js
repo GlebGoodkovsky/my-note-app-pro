@@ -509,7 +509,21 @@ function init() {
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (Array.isArray(imported) && imported.every(n => n.id && n.title !== undefined)) {
-                        notes = imported;
+
+                        // Use the browser's built-in Sanitizer API. This is the modern, secure way
+                        // to protect against malicious content in imported files.
+                        const sanitizer = new Sanitizer();
+                        const sanitizedNotes = imported.map(note => ({
+                            ...note, // Keep safe properties like id, timestamp, pinned
+                            // Sanitize the title and content to strip any potential HTML or scripts.
+                            // We use .textContent to ensure the final result is always plain text.
+                            title: sanitizer.sanitizeFor('span', note.title || '').textContent,
+                            content: sanitizer.sanitizeFor('div', note.content || '').textContent,
+                        }));
+
+                        // Now, use the safe, sanitized data to update the application state
+                        notes = sanitizedNotes;
+                        
                         saveNotesToStorage();
                         saveStateToHistory(); // Save imported state as a new history point
                         renderNotesList();
