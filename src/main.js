@@ -32,8 +32,11 @@ let searchTimeout = null;
 function getCurrentState() {
   const noteData = [];
   notesList.querySelectorAll('.note-item').forEach(noteItem => {
+    const textSpan = noteItem.querySelector('.note-text');
+    // Use stored plain text if available (from checklist updates), otherwise use textContent
+    const text = noteItem.dataset.plainText || textSpan.textContent;
     noteData.push({
-      text: noteItem.querySelector('.note-text').textContent,
+      text: text,
       id: noteItem.dataset.id,
       timestamp: noteTimestamps[noteItem.dataset.id],
       pinned: pinnedNotes.has(noteItem.dataset.id)
@@ -137,12 +140,26 @@ function togglePin(noteId) {
 // NEW: This is our smart, unified function for applying all text styling.
 function applySyntaxHighlighting(textSpan, plainText, searchTerm) {
   const tagRegex = /#([a-zA-Z0-9_]+)/g;
+  const checklistRegex = /^(\s*)-\s*\[([ x])\]\s*(.*)$/gm;
   let html = plainText;
 
   // First, wrap hashtags
   html = html.replace(tagRegex, (match) => {
     const color = getTagColor(match.toLowerCase());
     return `<span class="tag-highlight" style="background-color:${color};">${match}</span>`;
+  });
+
+  // Second, convert checklist items
+  html = html.replace(checklistRegex, (match, indent, checkState, text) => {
+    const isChecked = checkState.toLowerCase() === 'x';
+    const checkboxId = 'cb-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const checkedClass = isChecked ? ' checked' : '';
+    const checkedAttr = isChecked ? ' checked' : '';
+    
+    return `${indent}<div class="checklist-item${checkedClass}">
+      <input type="checkbox" class="checklist-checkbox" id="${checkboxId}"${checkedAttr} data-original-syntax="- [${checkState}] ${text}">
+      <label for="${checkboxId}" class="checklist-label">${text}</label>
+    </div>`;
   });
 
   // Then, if a search term exists, wrap it in a mark tag
@@ -156,12 +173,32 @@ function applySyntaxHighlighting(textSpan, plainText, searchTerm) {
     tempDiv.innerHTML = html;
     
     // Walk through all text nodes and apply search highlighting
-    const textNodes = Array.from(tempDiv.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
-    textNodes.forEach(node => {
-      const parent = node.parentNode;
-      const parts = node.textContent.split(searchRegex);
+    const walker = document.createTreeWalker(
+      tempDiv,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function(node) {
+          // Skip text nodes inside input elements or that are part of HTML attributes
+          if (node.parentNode.tagName === 'INPUT' || 
+              node.parentNode.classList?.contains('checklist-checkbox')) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node);
+    }
+
+    textNodes.forEach(textNode => {
+      const parent = textNode.parentNode;
+      const parts = textNode.textContent.split(searchRegex);
       if (parts.length > 1) {
-        const matches = node.textContent.match(searchRegex);
+        const matches = textNode.textContent.match(searchRegex);
         const fragment = document.createDocumentFragment();
         parts.forEach((part, index) => {
           fragment.appendChild(document.createTextNode(part));
@@ -171,7 +208,7 @@ function applySyntaxHighlighting(textSpan, plainText, searchTerm) {
             fragment.appendChild(mark);
           }
         });
-        parent.replaceChild(fragment, node);
+        parent.replaceChild(fragment, textNode);
       }
     });
     html = tempDiv.innerHTML;
@@ -475,7 +512,7 @@ const buildNote = (text, noteDataObject = null) => {
     textSpan.focus();
   });
 
-  textSpan.addEventListener('blur', () => {
+textSpan.addEventListener('blur', () => {
     noteContent.classList.remove('editing');
     textSpan.contentEditable = false;
     if (textSpan.textContent.trim() === "") {
@@ -489,6 +526,21 @@ const buildNote = (text, noteDataObject = null) => {
     applySyntaxHighlighting(textSpan, textSpan.textContent, '');
   });
 
+  // Add checklist functionality
+  textSpan.addEventListener('change', (e) => {
+    if (e.target.classList.contains('checklist-checkbox')) {
+      handleChecklistToggle(e.target, textSpan);
+    }
+  });
+
+  textSpan.addEventListener('click', (e) => {
+    // Prevent editing when clicking on checklist elements
+    if (e.target.classList.contains('checklist-checkbox') || 
+        e.target.classList.contains('checklist-label')) {
+      e.stopPropagation();
+    }
+  });
+
   noteItem.addEventListener('dragstart', handleDragStart);
   noteItem.addEventListener('dragend', handleDragEnd);
   noteContent.appendChild(textSpan);
@@ -497,6 +549,83 @@ const buildNote = (text, noteDataObject = null) => {
   noteItem.appendChild(noteContent);
   notesList.appendChild(noteItem);
 };
+
+// ================================
+// === Checklist Functions ===
+// ================================
+
+function handleChecklistToggle(checkbox, textSpan) {
+  const isChecked = checkbox.checked;
+  const checklistItem = checkbox.closest('.checklist-item');
+  
+  // Update visual state
+  if (isChecked) {
+    checklistItem.classList.add('checked');
+  } else {
+    checklistItem.classList.remove('checked');
+  }
+  
+  // Update the underlying text content
+  updateTextFromChecklistState(textSpan);
+  
+  // Save changes
+  saveStateAndNotes();
+}
+
+function updateTextFromChecklistState(textSpan) {
+  // Convert the current HTML back to plain text with updated checkbox states
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = textSpan.innerHTML;
+  
+  let plainText = '';
+  const walker = document.createTreeWalker(
+    tempDiv,
+    NodeFilter.SHOW_ALL,
+    null,
+    false
+  );
+  
+  let node;
+  while (node = walker.nextNode()) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      // Skip text nodes that are inside checklist HTML structure
+      if (!node.parentNode.classList?.contains('checklist-label') &&
+          !node.parentNode.classList?.contains('checklist-item')) {
+        plainText += node.textContent;
+      }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      if (node.classList.contains('checklist-item')) {
+        const checkbox = node.querySelector('.checklist-checkbox');
+        const label = node.querySelector('.checklist-label');
+        if (checkbox && label) {
+          const checkState = checkbox.checked ? 'x' : ' ';
+          const indent = node.innerHTML.match(/^(\s*)/)?.[1] || '';
+          plainText += `${indent}- [${checkState}] ${label.textContent}\n`;
+        }
+      } else if (node.classList.contains('tag-highlight')) {
+        plainText += node.textContent;
+      } else if (node.tagName === 'MARK') {
+        plainText += node.textContent;
+      } else if (node.tagName === 'BR') {
+        plainText += '\n';
+      }
+    }
+  }
+  
+  // Update the text content without losing the note reference
+  const lines = plainText.split('\n');
+  const cleanLines = lines.filter((line, index) => {
+    // Remove empty lines except the last one if the original had a trailing newline
+    return line.trim() !== '' || (index === lines.length - 1 && plainText.endsWith('\n'));
+  });
+  
+  // Store the updated text content (this is what gets saved)
+  const noteItem = textSpan.closest('.note-item');
+  if (noteItem) {
+    // We need to temporarily store the plain text for saving purposes
+    noteItem.dataset.plainText = cleanLines.join('\n').trim();
+  }
+}
 
 // ================================
 // === Drag & Drop Handlers ===
