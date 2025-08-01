@@ -3,53 +3,50 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Note App</title>
-    
-    <!-- Add DOMPurify for security -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
-    
+    <title>My Note App Pro</title>
     <link rel="stylesheet" href="/src/style.css"> 
   </head>
   <body>
     
-    <!-- ====== NEW: Main container for the list of notes ====== -->
-    <div id="list-view-container">
-      <h1>My Notes</h1>    
-      <button id="theme-toggle">☀️</button>
+    <div id="app-container">
 
-      <div id="controls-container">
-          <div class="sort-group">
-              <select id="sort-method">
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="a-z">A-Z</option>
-                  <option value="z-a">Z-A</option>
-              </select>
-          </div>
-            <button id="add-button" class="control-btn">➕</button>
-            <button id="search-button" class="control-btn">🔍</button>
+      <!-- Sidebar with Note List -->
+      <div id="sidebar">
+        <div class="sidebar-header">
+          <h1>My Notes</h1>
+          <button id="add-note-sidebar" class="control-btn">➕</button>
+        </div>
+        <div id="controls-container">
+          <select id="sort-method">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="a-z">A-Z</option>
+            <option value="z-a">Z-A</option>
+          </select>
+          <button id="search-button" class="control-btn">🔍</button>
+        </div>
+        <ul id="notes-list"></ul>
+      </div>
+
+      <!-- Main Content Area with Editor -->
+      <div id="main-content">
+        <div class="main-content-header">
+          <button id="sidebar-toggle-btn" title="Toggle Sidebar">☰</button>
+          <div class="header-controls">
+            <button id="theme-toggle" title="Toggle Theme">☀️</button>
             <button id="export-button" class="control-btn">Export</button>
             <button id="import-button" class="control-btn">Import</button>
+          </div>
+        </div>
+        <div class="editor-body">
+          <input type="text" id="note-editor-title" placeholder="Select a note or create a new one...">
+          <textarea id="note-editor-content" placeholder=""></textarea>
+        </div>
       </div>
 
-      <ul id="notes-list"></ul>
     </div>
-
-    <!-- ====== NEW: Container for the note editor page (hidden by default) ====== -->
-    <div id="editor-view-container" class="hidden">
-      <div class="editor-header">
-        <button id="back-button" class="control-btn">⬅️ Back</button>
-      </div>
-      <div class="editor-content">
-        <input type="text" id="note-editor-title" placeholder="Your Title Here...">
-        <textarea id="note-editor-content" placeholder="Start writing your note..."></textarea>
-      </div>
-    </div>
-
-
-    <script type="module" src="/src/main.js"></script>
-
-    <!-- Spotlight Modal -->
+    
+    <!-- Spotlight Modal (remains the same) -->
     <div id="spotlight-overlay" class="spotlight-overlay">
       <div id="spotlight-modal" class="spotlight-modal">
         <div class="spotlight-input-wrapper">
@@ -62,6 +59,7 @@
         </div>
       </div>
     </div>
-
+    
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>
