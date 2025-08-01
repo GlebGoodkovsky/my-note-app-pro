@@ -119,37 +119,42 @@ function renderNotesList() {
  * Creates a single note list item element for the sidebar.
  * @param {object} note The note object to create an item for.
  */
+// NEW, CORRECTED CODE
 function createNoteListItem(note) {
     const noteItem = document.createElement('li');
     noteItem.className = 'note-item';
     noteItem.dataset.id = note.id;
     noteItem.draggable = true;
-    if (note.pinned) noteItem.classList.add('pinned');
+    if (note.pinned) {
+        noteItem.classList.add('pinned');
+    }
 
     const noteContent = document.createElement('div');
     noteContent.className = 'note-content';
 
     const textSpan = document.createElement('span');
     textSpan.className = 'note-text';
-    textSpan.textContent = note.title;
+    textSpan.textContent = note.title; // Only the title is visible
 
+    // The pin button's content now changes based on the note's state
     const pinButton = document.createElement('button');
     pinButton.className = "pin-btn";
-    pinButton.innerHTML = '📍';
-    pinButton.title = 'Pin note';
+    pinButton.innerHTML = note.pinned ? '📌' : '📍'; // It's a pin if pinned, a dot if not
+    pinButton.title = note.pinned ? 'Unpin note' : 'Pin note';
 
     const deleteButton = document.createElement('button');
     deleteButton.className = "delete-btn";
     deleteButton.innerHTML = '🗑️';
     deleteButton.title = 'Delete note';
 
-    // --- Event Listeners ---
+    // Event Listeners
     noteItem.addEventListener('click', () => populateEditor(note.id));
     pinButton.addEventListener('click', e => { e.stopPropagation(); togglePin(note.id); });
     deleteButton.addEventListener('click', e => { e.stopPropagation(); deleteNote(note.id, noteContent); });
     noteItem.addEventListener('dragstart', handleDragStart);
     noteItem.addEventListener('dragend', handleDragEnd);
 
+    // Assemble the note item correctly: Text first, then the buttons
     noteContent.appendChild(textSpan);
     noteContent.appendChild(pinButton);
     noteContent.appendChild(deleteButton);

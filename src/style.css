@@ -170,19 +170,6 @@ body.dark-mode .note-item.active .note-content {
   font-size: 0.95em;
 }
 
-.note-item.pinned .note-text {
-  font-weight: 600;
-  position: relative;
-  padding-left: 18px;
-}
-.note-item.pinned .note-text::before {
-  content: '📌';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-}
 
 /* NEW, IMPROVED CODE */
 .note-item .pin-btn,
@@ -530,4 +517,23 @@ body.dark-mode .spotlight-hint {
   #note-editor-title {
     font-size: 1.8em;
   }
+}
+
+/* NEW SECTION */
+/* --- Pinned Note Style --- */
+.note-item.pinned .note-content {
+  background-color: #fffbe6; /* A warm, creamy yellow */
+  border-bottom-color: #f5e4a3;
+}
+body.dark-mode .note-item.pinned .note-content {
+  background-color: #2e260a; /* A complementary dark gold */
+  border-bottom-color: #5a4b1c;
+}
+
+/* Make sure the active state overrides the hover, but not the pinned state */
+.note-item.active.pinned .note-content {
+  background-color: #fff9d6;
+}
+body.dark-mode .note-item.active.pinned .note-content {
+  background-color: #3b3211;
 }
