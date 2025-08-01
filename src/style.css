@@ -13,12 +13,12 @@
   --accent-bg-light: #e6f2ff;
   --shadow-light: rgba(0, 0, 0, 0.08);
   --delete-bg-light: #ffdddd;
+  --reappear-bg-light: #d4edda; /* Green for Undo */
 
-  /* NEW: Swapped and brighter colors */
-  --pinned-bg-light: #fff0e0;         /* Warm Orange for Pinned */
+  --pinned-bg-light: #fff0e0;
   --pinned-border-light: #ffd1a3;
 
-  --dragging-bg-light: #fffacc;       /* Brighter Yellow for Dragging */
+  --dragging-bg-light: #fffacc;
   --dragging-border-light: #ffe478;
 
   /* --- Dark Mode --- */
@@ -30,12 +30,12 @@
   --accent-bg-dark: #1c2a3e;
   --shadow-dark: rgba(0, 0, 0, 0.3);
   --delete-bg-dark: #5c2a32;
+  --reappear-bg-dark: #1f4d30; /* Dark Green for Undo */
   
-  /* NEW: Swapped and brighter colors (Dark Mode) */
-  --pinned-bg-dark: #5e3a19;          /* Dark Orange for Pinned */
+  --pinned-bg-dark: #5e3a19;
   --pinned-border-dark: #965d29;
 
-  --dragging-bg-dark: #524815;        /* Brighter Dark Yellow for Dragging */
+  --dragging-bg-dark: #524815;
   --dragging-border-dark: #817228;
 
   /* --- Sizing & Speed --- */
@@ -197,7 +197,7 @@ body.dark-mode .note-item.pinned .note-content {
   background-color: var(--pinned-bg-dark);
 }
 .note-item.active.pinned .note-content {
-  background-color: #fff4e8; /* Slightly brighter active pinned */
+  background-color: #fff4e8;
 }
 body.dark-mode .note-item.active.pinned .note-content {
   background-color: #6b431f;
@@ -372,6 +372,20 @@ body.dark-mode .note-item.deleting .note-content {
   background-color: var(--delete-bg-dark) !important;
 }
 
+@keyframes reappear-animation {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.note-item.reappearing {
+  animation: reappear-animation 0.3s ease-out forwards;
+}
+.note-item.reappearing .note-content {
+  background-color: var(--reappear-bg-light) !important;
+}
+body.dark-mode .note-item.reappearing .note-content {
+  background-color: var(--reappear-bg-dark) !important;
+}
+
 .note-item.dragging .note-content {
   background-color: var(--dragging-bg-light) !important;
   border-color: var(--dragging-border-light) !important;
@@ -384,18 +398,8 @@ body.dark-mode .note-item.dragging .note-content {
 }
 
 @keyframes grow-indicator {
-  from {
-    height: 0;
-    opacity: 0;
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-  to {
-    height: 50px;
-    opacity: 1;
-    margin-top: 8px;
-    margin-bottom: 8px;
-  }
+  from { height: 0; opacity: 0; margin: 0; }
+  to { height: 50px; opacity: 1; margin: 8px 0; }
 }
 .drop-indicator {
   height: 50px;

@@ -37,6 +37,11 @@ let activeTags = new Set();
 let spotlightMode = 'add';
 let selectedResultIndex = -1;
 
+// --- History State ---
+let undoStack = [];
+let redoStack = [];
+const HISTORY_LIMIT = 50; // Max number of undo steps
+
 // ================================
 // === Core App Logic ===
 // ================================
@@ -133,12 +138,11 @@ function createNoteListItem(note) {
 
     const textSpan = document.createElement('span');
     textSpan.className = 'note-text';
-    textSpan.textContent = note.title; // Only the title is visible
+    textSpan.textContent = note.title;
 
-    // The pin button's content now changes based on the note's state
     const pinButton = document.createElement('button');
     pinButton.className = "pin-btn";
-    pinButton.innerHTML = note.pinned ? '📌' : '📍'; // It's a pin if pinned, a dot if not
+    pinButton.innerHTML = note.pinned ? '📌' : '📍';
     pinButton.title = note.pinned ? 'Unpin note' : 'Pin note';
 
     const deleteButton = document.createElement('button');
@@ -149,11 +153,10 @@ function createNoteListItem(note) {
     // Event Listeners
     noteItem.addEventListener('click', () => populateEditor(note.id));
     pinButton.addEventListener('click', e => { e.stopPropagation(); togglePin(note.id); });
-    deleteButton.addEventListener('click', e => { e.stopPropagation(); deleteNote(note.id, noteItem); }); // THE FIX IS HERE
+    deleteButton.addEventListener('click', e => { e.stopPropagation(); deleteNote(note.id, noteItem); });
     noteItem.addEventListener('dragstart', handleDragStart);
     noteItem.addEventListener('dragend', handleDragEnd);
 
-    // Assemble the note item correctly: Text first, then the buttons
     noteContent.appendChild(textSpan);
     noteContent.appendChild(pinButton);
     noteContent.appendChild(deleteButton);
@@ -173,10 +176,11 @@ function addNewNote(title) {
         timestamp: Date.now(),
         pinned: false,
     };
-    notes.unshift(newNote); // Add to the top of the array
-    renderNotesList(); // Re-render the list to show the new note
-    populateEditor(newNote.id); // Open the new note in the editor
-    noteEditorContent.focus(); // Focus the content area
+    notes.unshift(newNote);
+    saveStateToHistory();
+    renderNotesList();
+    populateEditor(newNote.id);
+    noteEditorContent.focus();
     saveNotesToStorage();
 }
 
@@ -184,8 +188,9 @@ function deleteNote(noteId, noteItemElement) {
     noteItemElement.classList.add('deleting');
     noteItemElement.addEventListener('animationend', () => {
         notes = notes.filter(n => n.id !== noteId);
+        saveStateToHistory();
         if (currentEditingNoteId === noteId) {
-            populateEditor(notes[0]?.id || null); // Open first available note or clear editor
+            populateEditor(notes[0]?.id || null);
         }
         renderNotesList();
         saveNotesToStorage();
@@ -200,6 +205,7 @@ function togglePin(noteId) {
     }
     renderNotesList();
     saveNotesToStorage();
+    saveStateToHistory();
 }
 
 function sortNotes() {
@@ -234,7 +240,6 @@ function saveNotesToStorage() {
 
 function loadNotesFromStorage() {
     let savedNotes = JSON.parse(localStorage.getItem('notes') || '[]');
-    // Simple migration for old format. Can be removed later.
     if (savedNotes.length > 0 && typeof savedNotes[0] === 'object' && savedNotes[0].hasOwnProperty('text')) {
         savedNotes = savedNotes.map(oldNote => ({
             id: oldNote.id,
@@ -246,6 +251,73 @@ function loadNotesFromStorage() {
     }
     notes = savedNotes;
     renderNotesList();
+}
+
+// ================================
+// === History (Undo/Redo) Logic ===
+// ================================
+
+/**
+ * Saves a snapshot of the current notes array to the undo stack.
+ */
+function saveStateToHistory() {
+    redoStack = [];
+    const currentState = JSON.parse(JSON.stringify(notes));
+    const lastState = undoStack[undoStack.length - 1];
+    if (JSON.stringify(lastState) === JSON.stringify(currentState)) {
+        return;
+    }
+    undoStack.push(currentState);
+    if (undoStack.length > HISTORY_LIMIT) {
+        undoStack.shift();
+    }
+}
+
+/**
+ * Reverts the application to the previous state in the undo stack.
+ */
+function undo() {
+    if (undoStack.length <= 1) return;
+    const currentState = undoStack.pop();
+    redoStack.push(currentState);
+    const stateToRender = undoStack[undoStack.length - 1];
+    renderState(stateToRender, currentState);
+}
+
+/**
+ * Re-applies a state from the redo stack.
+ */
+function redo() {
+    if (redoStack.length === 0) return;
+    const stateToRender = redoStack.pop();
+    undoStack.push(stateToRender);
+    const currentState = notes;
+    renderState(stateToRender, currentState);
+}
+
+/**
+ * Renders a specific state of the notes array and handles animations.
+ * @param {Array} stateToRender The notes array to display.
+ * @param {Array} previousState The notes array from before the change.
+ */
+function renderState(stateToRender, previousState) {
+    notes = JSON.parse(JSON.stringify(stateToRender));
+    renderNotesList();
+    saveNotesToStorage();
+
+    const previousIds = new Set(previousState.map(note => note.id));
+    const restoredNotes = stateToRender.filter(note => !previousIds.has(note.id));
+
+    restoredNotes.forEach(note => {
+        const noteElement = notesList.querySelector(`.note-item[data-id="${note.id}"]`);
+        if (noteElement) {
+            noteElement.classList.add('reappearing');
+            noteElement.addEventListener('animationend', () => {
+                noteElement.classList.remove('reappearing');
+            }, { once: true });
+        }
+    });
+    populateEditor(currentEditingNoteId);
 }
 
 // ================================
@@ -325,9 +397,7 @@ function handleSpotlightKeydown(e) {
             if (selected) selectSearchResult(selected.dataset.id);
         }
     }
-    // Arrow key navigation can be added here
 }
-
 
 // ================================
 // === Drag & Drop ===
@@ -346,6 +416,7 @@ function handleDragEnd() {
     const newOrderedIds = [...notesList.querySelectorAll('.note-item')].map(item => item.dataset.id);
     notes.sort((a, b) => newOrderedIds.indexOf(a.id) - newOrderedIds.indexOf(b.id));
     saveNotesToStorage();
+    saveStateToHistory();
 }
 
 function getElementAfterDrag(container, y) {
@@ -378,7 +449,8 @@ function init() {
 
     // --- Load Data & Setup Editor ---
     loadNotesFromStorage();
-    populateEditor(notes.find(n => n.pinned)?.id || notes[0]?.id || null); // Open first pinned/regular note or nothing
+    saveStateToHistory(); // Save the initial state for the undo stack
+    populateEditor(notes.find(n => n.pinned)?.id || notes[0]?.id || null);
 
     // --- Add Event Listeners ---
     themeToggleButton.addEventListener('click', () => {
@@ -439,6 +511,7 @@ function init() {
                     if (Array.isArray(imported) && imported.every(n => n.id && n.title !== undefined)) {
                         notes = imported;
                         saveNotesToStorage();
+                        saveStateToHistory(); // Save imported state as a new history point
                         renderNotesList();
                         populateEditor(notes[0]?.id || null);
                     } else {
@@ -451,6 +524,23 @@ function init() {
             reader.readAsText(file);
         };
         input.click();
+    });
+    
+    document.addEventListener('keydown', (e) => {
+        const isTyping = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA';
+        if (isTyping) return;
+
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const isUndo = (isMac ? e.metaKey : e.ctrlKey) && e.key === 'z' && !e.shiftKey;
+        const isRedo = (isMac ? e.metaKey : e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey));
+
+        if (isUndo) {
+            e.preventDefault();
+            undo();
+        } else if (isRedo) {
+            e.preventDefault();
+            redo();
+        }
     });
 }
 
