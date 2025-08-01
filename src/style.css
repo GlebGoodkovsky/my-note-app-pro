@@ -9,8 +9,8 @@
   --bg-color-light: #ffffff;
   --bg-color-secondary-light: #f7f7f7;
   --text-color-light: #2c2c2c;
-  --accent-color-light: #007aff;
-  --accent-bg-light: #e6f2ff;
+  --accent-color-light: #007aff; /* The darker blue */
+  --accent-bg-light: #e6f2ff;   /* The very light blue */
   --shadow-light: rgba(0, 0, 0, 0.08);
   --delete-bg-light: #ffdddd;
   --reappear-bg-light: #d4edda;
@@ -26,8 +26,8 @@
   --bg-color-dark: #121212;
   --bg-color-secondary-dark: #1a1a1a;
   --text-color-dark: #e0e0e0;
-  --accent-color-dark: #0a84ff;
-  --accent-bg-dark: #1c2a3e;
+  --accent-color-dark: #0a84ff; /* The darker blue for dark mode */
+  --accent-bg-dark: #1c2a3e;   /* The very light blue for dark mode */
   --shadow-dark: rgba(0, 0, 0, 0.3);
   --delete-bg-dark: #5c2a32;
   --reappear-bg-dark: #1f4d30;
@@ -40,7 +40,7 @@
   /* --- Sizing & Speed --- */
   --sidebar-width: 300px;
   --transition-speed: 0.3s;
-  --transition-speed-fast: 0.2s; /* New: For quicker UI feedback */
+  --transition-speed-fast: 0.2s;
 }
 
 * {
@@ -59,7 +59,6 @@ html, body {
   background-color: var(--bg-color-light);
   color: var(--text-color-light);
   overflow: hidden;
-  /* UPDATED: Smoother theme transition */
   transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
@@ -85,7 +84,6 @@ body.dark-mode {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  /* UPDATED: Refined slide animation timing */
   transition: margin-left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 body.dark-mode #sidebar {
@@ -97,7 +95,6 @@ body.dark-mode #sidebar {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  /* NEW: Smooth resize transition when sidebar opens/closes */
   transition: width var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -158,7 +155,6 @@ body.dark-mode #controls-container {
   display: flex;
   align-items: center;
   gap: 8px;
-  /* UPDATED: Smooth transition for hover, selection, and pinning */
   transition: background-color var(--transition-speed-fast) ease, box-shadow var(--transition-speed-fast) ease, padding-left var(--transition-speed-fast) ease;
 }
 body.dark-mode .note-content {
@@ -241,12 +237,10 @@ body.dark-mode .main-content-header {
   border: none;
   background: transparent;
   padding: 15px 0;
-  color: var(--text-color-light);
+  color: inherit;
   width: 100%;
 }
-body.dark-mode #note-editor-title {
-  color: var(--text-color-dark);
-}
+
 #note-editor-title:disabled { background-color: transparent; }
 
 #note-editor-title::placeholder {
@@ -265,13 +259,10 @@ body.dark-mode #note-editor-title::placeholder {
   line-height: 1.7;
   border: none;
   background: transparent;
-  color: var(--text-color-light);
+  color: inherit;
   resize: none;
   width: 100%;
   padding: 0;
-}
-body.dark-mode #note-editor-content {
-  color: var(--text-color-dark);
 }
 #note-editor-content:disabled { background-color: transparent; }
 
@@ -289,7 +280,6 @@ body.dark-mode #note-editor-content {
   white-space: nowrap;
   color: var(--text-color-light);
   font-size: 14px;
-  /* UPDATED: Transition for all buttons */
   transition: all var(--transition-speed-fast) ease;
 }
 body.dark-mode .control-btn, body.dark-mode #sort-method, body.dark-mode #search-button {
@@ -298,20 +288,21 @@ body.dark-mode .control-btn, body.dark-mode #sort-method, body.dark-mode #search
   color: var(--text-color-dark);
 }
 
-/* NEW: Button hover and active states */
 .control-btn:hover, #sort-method:hover, #search-button:hover {
-  border-color: var(--accent-color-light);
-  color: var(--accent-color-light);
-  transform: translateY(-2px); /* Lifts the button slightly */
+  background-color: var(--accent-bg-light); 
+  border-color: var(--accent-color-light);  
+  color: var(--accent-color-light);         
+  transform: translateY(-2px);
   box-shadow: 0 4px 8px var(--shadow-light);
 }
 body.dark-mode .control-btn:hover, body.dark-mode #sort-method:hover, body.dark-mode #search-button:hover {
-  border-color: var(--accent-color-dark);
-  color: var(--accent-color-dark);
+  background-color: var(--accent-bg-dark);
+  border-color: var(--accent-color-dark);  
+  color: var(--accent-color-dark);         
   box-shadow: 0 4px 12px var(--shadow-dark);
 }
 .control-btn:active, #sort-method:active, #search-button:active {
-    transform: translateY(0px); /* Pushes the button back down on click */
+    transform: translateY(0px);
     box-shadow: none;
     transition-duration: 0.1s;
 }
@@ -321,7 +312,7 @@ body.dark-mode .control-btn:hover, body.dark-mode #sort-method:hover, body.dark-
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-color-light);
+  color: inherit;
   padding: 5px;
   border-radius: 50%;
   width: 36px;
@@ -330,9 +321,6 @@ body.dark-mode .control-btn:hover, body.dark-mode #sort-method:hover, body.dark-
   align-items: center;
   justify-content: center;
   transition: all var(--transition-speed-fast) ease;
-}
-body.dark-mode #sidebar-toggle-btn, body.dark-mode #theme-toggle {
-  color: var(--text-color-dark);
 }
 
 #sidebar-toggle-btn:hover, #theme-toggle:hover {
@@ -343,7 +331,7 @@ body.dark-mode #sidebar-toggle-btn:hover, body.dark-mode #theme-toggle:hover {
   background-color: var(--bg-color-secondary-dark);
 }
 
-/* UPDATED: Pin/Delete buttons fade in smoothly */
+/* UPDATED: Pin/Delete buttons are now always visible but subtle */
 .pin-btn, .delete-btn {
   background: none;
   border: none;
@@ -356,14 +344,20 @@ body.dark-mode #sidebar-toggle-btn:hover, body.dark-mode #theme-toggle:hover {
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  opacity: 0; /* Initially hidden */
-  transform: scale(0.8);
+  opacity: 0.4; /* Always visible, but dimmed */
   transition: opacity var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
 }
+
+/* UPDATED: Hovering the note item makes the buttons fully opaque */
 .note-item:hover .pin-btn,
 .note-item:hover .delete-btn {
-  opacity: 1; /* Fade in on hover */
-  transform: scale(1);
+  opacity: 1;
+}
+
+/* NEW: Hovering the emoji button itself makes it pop */
+.pin-btn:hover,
+.delete-btn:hover {
+  transform: scale(1.2);
 }
 
 /*
@@ -373,7 +367,7 @@ body.dark-mode #sidebar-toggle-btn:hover, body.dark-mode #theme-toggle:hover {
 */
 @keyframes delete-animation {
   from { transform: scale(1); opacity: 1; }
-  to { transform: scale(0.95); opacity: 0; max-height: 0; padding: 0; margin: 0; }
+  to { transform: scale(0.9); opacity: 0; max-height: 0; padding: 0; margin: 0; }
 }
 .note-item.deleting {
   animation: delete-animation 0.3s ease-out forwards;
@@ -430,7 +424,6 @@ body.dark-mode .note-item.dragging .note-content {
   z-index: 2000;
   opacity: 0;
   visibility: hidden;
-  /* UPDATED: Smooth fade-in transition */
   transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
 }
 .spotlight-overlay.show {
@@ -450,7 +443,6 @@ body.dark-mode .spotlight-overlay {
   max-height: 70vh;
   overflow: hidden;
   transform: scale(0.95);
-  /* UPDATED: Smooth scale-in transition */
   transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 .spotlight-overlay.show .spotlight-modal {
@@ -475,11 +467,8 @@ body.dark-mode .spotlight-input-wrapper {
   font-size: 20px;
   border: none;
   background: transparent;
-  color: var(--text-color-light);
+  color: inherit;
   padding: 0;
-}
-body.dark-mode #spotlight-input {
-  color: var(--text-color-dark);
 }
 
 #spotlight-placeholder {
@@ -516,7 +505,7 @@ body.dark-mode #spotlight-input {
   background-color: var(--accent-bg-light);
   color: var(--accent-color-light);
 }
-body.dark-mode .spotlight-result-item:hover, body.dark-mode .spotlight-result-item.selected {
+body.dark-mode .spotlight-result-item:hover, .spotlight-result-item.selected {
   background-color: var(--accent-bg-dark);
   color: var(--accent-color-dark);
 }
