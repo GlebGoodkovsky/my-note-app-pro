@@ -252,7 +252,7 @@ function updateActiveTagsAndDropdown() {
     });
     activeTags = newActiveTags;
     
-    // Update dropdown (not implemented in detail for brevity, your old code is fine)
+    // Update dropdown (not implemented in detail for brevity)
 }
 
 // ================================
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const imported = JSON.parse(e.target.result);
                         // Basic validation
-                        if (Array.isArray(imported) && imported.every(n => n.id && n.title)) {
+                        if (Array.isArray(imported) && imported.every(n => n.id && n.title !== undefined)) {
                             notes = imported;
                             saveNotes();
                             renderNotesList();

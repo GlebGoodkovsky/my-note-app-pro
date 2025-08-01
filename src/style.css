@@ -257,6 +257,69 @@ body {
   padding: 0 2px;
 }
 
+/*
+  ================================
+  === Checklist Styles ===
+  ================================
+*/
+
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  margin: 4px 0;
+  padding: 2px 0;
+  transition: all 0.3s ease;
+}
+
+.checklist-checkbox {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: #4a90e2;
+  flex-shrink: 0;
+}
+
+.checklist-label {
+  cursor: pointer;
+  flex-grow: 1;
+  line-height: 1.4;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.checklist-item.checked .checklist-label {
+  text-decoration: line-through;
+  opacity: 0.6;
+  color: #999;
+}
+
+.checklist-item:hover .checklist-label {
+  color: #4a90e2;
+}
+
+.checklist-item.checked:hover .checklist-label {
+  color: #999;
+}
+
+/* Dark mode checklist styles */
+body.dark-mode .checklist-checkbox {
+  accent-color: #5a9ce2;
+}
+
+body.dark-mode .checklist-item.checked .checklist-label {
+  color: #666;
+}
+
+body.dark-mode .checklist-item:hover .checklist-label {
+  color: #5a9ce2;
+}
+
+body.dark-mode .checklist-item.checked:hover .checklist-label {
+  color: #666;
+}
+
 .note-content:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 10px rgba(0,0,0,0.15);
