@@ -13,11 +13,11 @@
   --accent-bg-light: #e6f2ff;
   --shadow-light: rgba(0, 0, 0, 0.08);
   --delete-bg-light: #ffdddd;
-  --reappear-bg-light: #d4edda; /* Green for Undo */
+  --reappear-bg-light: #d4edda;
 
+  /* State Colors */
   --pinned-bg-light: #fff0e0;
   --pinned-border-light: #ffd1a3;
-
   --dragging-bg-light: #fffacc;
   --dragging-border-light: #ffe478;
 
@@ -30,11 +30,10 @@
   --accent-bg-dark: #1c2a3e;
   --shadow-dark: rgba(0, 0, 0, 0.3);
   --delete-bg-dark: #5c2a32;
-  --reappear-bg-dark: #1f4d30; /* Dark Green for Undo */
+  --reappear-bg-dark: #1f4d30;
   
   --pinned-bg-dark: #5e3a19;
   --pinned-border-dark: #965d29;
-
   --dragging-bg-dark: #524815;
   --dragging-border-dark: #817228;
 
@@ -48,12 +47,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-*:focus-visible {
-  outline: 2px solid var(--accent-color-light);
-  outline-offset: 2px;
-}
-body.dark-mode *:focus-visible {
-  outline-color: var(--accent-color-dark);
+/* 
+  NEW: Universal rule to remove the default blue outline from all elements when they are focused.
+  This is the ONLY focus rule now.
+*/
+*:focus {
+  outline: none;
 }
 
 html, body {
@@ -197,7 +196,7 @@ body.dark-mode .note-item.pinned .note-content {
   background-color: var(--pinned-bg-dark);
 }
 .note-item.active.pinned .note-content {
-  background-color: #fff4e8;
+  background-color: #fff4e8; /* Slightly brighter active pinned */
 }
 body.dark-mode .note-item.active.pinned .note-content {
   background-color: #6b431f;
@@ -249,6 +248,15 @@ body.dark-mode #note-editor-title {
 }
 #note-editor-title:disabled { background-color: transparent; }
 
+#note-editor-title::placeholder {
+  font-size: 0.8em;
+  font-weight: 500;
+  color: #c0c0c0;
+}
+body.dark-mode #note-editor-title::placeholder {
+  color: #555;
+}
+
 #note-editor-content {
   flex-grow: 1;
   font-size: 1.1em;
@@ -264,7 +272,6 @@ body.dark-mode #note-editor-title {
 body.dark-mode #note-editor-content {
   color: var(--text-color-dark);
 }
-#note-editor-content:focus { outline: none; }
 #note-editor-content:disabled { background-color: transparent; }
 
 /*
@@ -348,19 +355,8 @@ body.dark-mode #sidebar-toggle-btn:hover, body.dark-mode #theme-toggle:hover {
   ================================
 */
 @keyframes delete-animation {
-  from {
-    transform: scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: scale(0.95);
-    opacity: 0;
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    margin-top: 0;
-    margin-bottom: 0;
-  }
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.95); opacity: 0; max-height: 0; padding: 0; margin: 0; }
 }
 .note-item.deleting {
   animation: delete-animation 0.3s ease-out forwards;
@@ -483,7 +479,6 @@ body.dark-mode .spotlight-input-wrapper {
 body.dark-mode #spotlight-input {
   color: var(--text-color-dark);
 }
-#spotlight-input:focus { outline: none; }
 
 #spotlight-placeholder {
   position: absolute;
