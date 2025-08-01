@@ -40,6 +40,7 @@
   /* --- Sizing & Speed --- */
   --sidebar-width: 300px;
   --transition-speed: 0.3s;
+  --transition-speed-fast: 0.2s; /* New: For quicker UI feedback */
 }
 
 * {
@@ -47,10 +48,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 
-  NEW: Universal rule to remove the default blue outline from all elements when they are focused.
-  This is the ONLY focus rule now.
-*/
 *:focus {
   outline: none;
 }
@@ -62,6 +59,7 @@ html, body {
   background-color: var(--bg-color-light);
   color: var(--text-color-light);
   overflow: hidden;
+  /* UPDATED: Smoother theme transition */
   transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
@@ -87,6 +85,7 @@ body.dark-mode {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  /* UPDATED: Refined slide animation timing */
   transition: margin-left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 body.dark-mode #sidebar {
@@ -98,6 +97,8 @@ body.dark-mode #sidebar {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  /* NEW: Smooth resize transition when sidebar opens/closes */
+  transition: width var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body.sidebar-collapsed #sidebar {
@@ -157,7 +158,8 @@ body.dark-mode #controls-container {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background-color 0.2s ease;
+  /* UPDATED: Smooth transition for hover, selection, and pinning */
+  transition: background-color var(--transition-speed-fast) ease, box-shadow var(--transition-speed-fast) ease, padding-left var(--transition-speed-fast) ease;
 }
 body.dark-mode .note-content {
   border-bottom-color: var(--border-color-dark);
@@ -188,7 +190,6 @@ body.dark-mode .note-item.active .note-content {
   font-size: 0.95em;
 }
 
-/* --- Pinned Note Style --- */
 .note-item.pinned .note-content {
   background-color: var(--pinned-bg-light);
 }
@@ -196,7 +197,7 @@ body.dark-mode .note-item.pinned .note-content {
   background-color: var(--pinned-bg-dark);
 }
 .note-item.active.pinned .note-content {
-  background-color: #fff4e8; /* Slightly brighter active pinned */
+  background-color: #fff4e8;
 }
 body.dark-mode .note-item.active.pinned .note-content {
   background-color: #6b431f;
@@ -286,9 +287,10 @@ body.dark-mode #note-editor-content {
   border: 1px solid var(--border-color-light);
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s ease;
   color: var(--text-color-light);
   font-size: 14px;
+  /* UPDATED: Transition for all buttons */
+  transition: all var(--transition-speed-fast) ease;
 }
 body.dark-mode .control-btn, body.dark-mode #sort-method, body.dark-mode #search-button {
   background-color: var(--bg-color-secondary-dark);
@@ -296,13 +298,22 @@ body.dark-mode .control-btn, body.dark-mode #sort-method, body.dark-mode #search
   color: var(--text-color-dark);
 }
 
+/* NEW: Button hover and active states */
 .control-btn:hover, #sort-method:hover, #search-button:hover {
   border-color: var(--accent-color-light);
   color: var(--accent-color-light);
+  transform: translateY(-2px); /* Lifts the button slightly */
+  box-shadow: 0 4px 8px var(--shadow-light);
 }
 body.dark-mode .control-btn:hover, body.dark-mode #sort-method:hover, body.dark-mode #search-button:hover {
   border-color: var(--accent-color-dark);
   color: var(--accent-color-dark);
+  box-shadow: 0 4px 12px var(--shadow-dark);
+}
+.control-btn:active, #sort-method:active, #search-button:active {
+    transform: translateY(0px); /* Pushes the button back down on click */
+    box-shadow: none;
+    transition-duration: 0.1s;
 }
 
 #sidebar-toggle-btn, #theme-toggle {
@@ -318,17 +329,21 @@ body.dark-mode .control-btn:hover, body.dark-mode #sort-method:hover, body.dark-
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all var(--transition-speed-fast) ease;
 }
 body.dark-mode #sidebar-toggle-btn, body.dark-mode #theme-toggle {
   color: var(--text-color-dark);
 }
+
 #sidebar-toggle-btn:hover, #theme-toggle:hover {
   background-color: var(--bg-color-secondary-light);
+  transform: scale(1.1);
 }
 body.dark-mode #sidebar-toggle-btn:hover, body.dark-mode #theme-toggle:hover {
   background-color: var(--bg-color-secondary-dark);
 }
 
+/* UPDATED: Pin/Delete buttons fade in smoothly */
 .pin-btn, .delete-btn {
   background: none;
   border: none;
@@ -341,12 +356,14 @@ body.dark-mode #sidebar-toggle-btn:hover, body.dark-mode #theme-toggle:hover {
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  opacity: 0.4;
-  transition: opacity 0.2s ease;
+  opacity: 0; /* Initially hidden */
+  transform: scale(0.8);
+  transition: opacity var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
 }
 .note-item:hover .pin-btn,
 .note-item:hover .delete-btn {
-  opacity: 1;
+  opacity: 1; /* Fade in on hover */
+  transform: scale(1);
 }
 
 /*
@@ -393,23 +410,6 @@ body.dark-mode .note-item.dragging .note-content {
   border-color: var(--dragging-border-dark) !important;
 }
 
-@keyframes grow-indicator {
-  from { height: 0; opacity: 0; margin: 0; }
-  to { height: 50px; opacity: 1; margin: 8px 0; }
-}
-.drop-indicator {
-  height: 50px;
-  margin: 8px 0;
-  border-radius: 12px;
-  background-color: var(--dragging-bg-light);
-  border: 2px dashed var(--dragging-border-light);
-  animation: grow-indicator 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-body.dark-mode .drop-indicator {
-  background-color: var(--dragging-bg-dark);
-  border-color: var(--dragging-border-dark);
-}
-
 /*
   ================================
   === 7. Spotlight Modal Styles ===
@@ -430,6 +430,7 @@ body.dark-mode .drop-indicator {
   z-index: 2000;
   opacity: 0;
   visibility: hidden;
+  /* UPDATED: Smooth fade-in transition */
   transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
 }
 .spotlight-overlay.show {
@@ -449,6 +450,7 @@ body.dark-mode .spotlight-overlay {
   max-height: 70vh;
   overflow: hidden;
   transform: scale(0.95);
+  /* UPDATED: Smooth scale-in transition */
   transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 .spotlight-overlay.show .spotlight-modal {
@@ -508,6 +510,7 @@ body.dark-mode #spotlight-input {
   display: flex;
   align-items: center;
   gap: 12px;
+  transition: background-color var(--transition-speed-fast), color var(--transition-speed-fast);
 }
 .spotlight-result-item:hover, .spotlight-result-item.selected {
   background-color: var(--accent-bg-light);
