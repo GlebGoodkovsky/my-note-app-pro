@@ -8,7 +8,7 @@ const appContainer = document.getElementById('app-container');
 const sidebar = document.getElementById('sidebar');
 const notesList = document.getElementById('notes-list');
 const sortMethodSelect = document.getElementById('sort-method');
-const addNoteSidebarBtn = document.getElementById('add-note-sidebar'); // THE FIX IS HERE
+const addNoteSidebarBtn = document.getElementById('add-note-sidebar');
 const searchButton = document.getElementById('search-button');
 
 // --- Main Content Elements ---
@@ -119,7 +119,6 @@ function renderNotesList() {
  * Creates a single note list item element for the sidebar.
  * @param {object} note The note object to create an item for.
  */
-// NEW, CORRECTED CODE
 function createNoteListItem(note) {
     const noteItem = document.createElement('li');
     noteItem.className = 'note-item';
@@ -150,7 +149,7 @@ function createNoteListItem(note) {
     // Event Listeners
     noteItem.addEventListener('click', () => populateEditor(note.id));
     pinButton.addEventListener('click', e => { e.stopPropagation(); togglePin(note.id); });
-    deleteButton.addEventListener('click', e => { e.stopPropagation(); deleteNote(note.id, noteContent); });
+    deleteButton.addEventListener('click', e => { e.stopPropagation(); deleteNote(note.id, noteItem); }); // THE FIX IS HERE
     noteItem.addEventListener('dragstart', handleDragStart);
     noteItem.addEventListener('dragend', handleDragEnd);
 
@@ -181,9 +180,9 @@ function addNewNote(title) {
     saveNotesToStorage();
 }
 
-function deleteNote(noteId, noteElement) {
-    noteElement.classList.add('deleting');
-    noteElement.addEventListener('animationend', () => {
+function deleteNote(noteId, noteItemElement) {
+    noteItemElement.classList.add('deleting');
+    noteItemElement.addEventListener('animationend', () => {
         notes = notes.filter(n => n.id !== noteId);
         if (currentEditingNoteId === noteId) {
             populateEditor(notes[0]?.id || null); // Open first available note or clear editor
