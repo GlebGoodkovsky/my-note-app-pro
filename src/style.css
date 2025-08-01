@@ -674,3 +674,96 @@ body.dark-mode #export-button:active, body.dark-mode #import-button:active {
     font-size: 16px;
   }
 }
+
+/*
+  ================================
+  === View Switching & Editor Styles ===
+  ================================
+*/
+.hidden {
+  display: none !important;
+}
+
+#editor-view-container {
+  width: 100%;
+  max-width: 800px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 40px);
+}
+
+.editor-header {
+  margin-bottom: 20px;
+}
+
+#back-button {
+  padding: 8px 16px;
+  font-size: 16px;
+}
+
+.editor-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#note-editor-title {
+  font-size: 2.5em;
+  font-weight: bold;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  color: #333;
+  width: 100%;
+}
+
+#note-editor-content {
+  flex-grow: 1;
+  font-size: 1.1em;
+  line-height: 1.6;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 20px;
+  color: #333;
+  resize: none;
+  width: 100%;
+}
+
+/* --- Dark Mode Editor Styles --- */
+body.dark-mode #note-editor-title {
+  color: #e0e0e0;
+}
+body.dark-mode #note-editor-content {
+  background: #1e1e1e;
+  border-color: #333;
+  color: #e0e0e0;
+}
+body.dark-mode #back-button {
+  background-color: #2a3a57;
+  border: 1px solid #4a5f8a;
+  color: #e0e0e0;
+}
+
+/* --- Responsive Editor Styles --- */
+@media (max-width: 600px) {
+  #editor-view-container {
+    padding: 15px;
+    height: calc(100vh - 30px);
+  }
+  #note-editor-title {
+    font-size: 1.8em;
+  }
+  #note-editor-content {
+    font-size: 1em;
+  }
+}
+
+/* Minor tweak for list view on mobile */
+@media (max-width: 600px) {
+  #list-view-container {
+    width: 100%;
+  }
+}

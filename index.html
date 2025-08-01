@@ -11,43 +11,57 @@
     <link rel="stylesheet" href="/src/style.css"> 
   </head>
   <body>
-    <h1>My Notes</h1>    
-    <button id="theme-toggle">☀️</button>
+    
+    <!-- ====== NEW: Main container for the list of notes ====== -->
+    <div id="list-view-container">
+      <h1>My Notes</h1>    
+      <button id="theme-toggle">☀️</button>
 
-    <div id="controls-container">
-        <div class="sort-group">
-            <select id="sort-method">
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="a-z">A-Z</option>
-                <option value="z-a">Z-A</option>
-            </select>
-        </div>
-          <button id="add-button" class="control-btn">➕</button>
-          <button id="search-button" class="control-btn">🔍</button>
+      <div id="controls-container">
+          <div class="sort-group">
+              <select id="sort-method">
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="a-z">A-Z</option>
+                  <option value="z-a">Z-A</option>
+              </select>
+          </div>
+            <button id="add-button" class="control-btn">➕</button>
+            <button id="search-button" class="control-btn">🔍</button>
+            <button id="export-button" class="control-btn">Export</button>
+            <button id="import-button" class="control-btn">Import</button>
+      </div>
 
-      <!-- Add these buttons inside the #controls-container -->
-	<button id="export-button" class="control-btn">Export</button>
-	<button id="import-button" class="control-btn">Import</button>
-
+      <ul id="notes-list"></ul>
     </div>
 
-    <ul id="notes-list"></ul>
+    <!-- ====== NEW: Container for the note editor page (hidden by default) ====== -->
+    <div id="editor-view-container" class="hidden">
+      <div class="editor-header">
+        <button id="back-button" class="control-btn">⬅️ Back</button>
+      </div>
+      <div class="editor-content">
+        <input type="text" id="note-editor-title" placeholder="Your Title Here...">
+        <textarea id="note-editor-content" placeholder="Start writing your note..."></textarea>
+      </div>
+    </div>
+
+
     <script type="module" src="/src/main.js"></script>
 
     <!-- Spotlight Modal -->
-<div id="spotlight-overlay" class="spotlight-overlay">
-  <div id="spotlight-modal" class="spotlight-modal">
-    <div class="spotlight-input-wrapper">
-      <input id="spotlight-input" placeholder="" autocomplete="off">
-      <span id="spotlight-placeholder">Type to add a note...</span>
+    <div id="spotlight-overlay" class="spotlight-overlay">
+      <div id="spotlight-modal" class="spotlight-modal">
+        <div class="spotlight-input-wrapper">
+          <input id="spotlight-input" placeholder="" autocomplete="off">
+          <span id="spotlight-placeholder">Type to add a note...</span>
+        </div>
+        <div id="spotlight-results" class="spotlight-results"></div>
+        <div class="spotlight-hint">
+          <span id="spotlight-mode-text">Add Mode</span> • Press Enter to add • Escape to cancel
+        </div>
+      </div>
     </div>
-    <div id="spotlight-results" class="spotlight-results"></div>
-    <div class="spotlight-hint">
-      <span id="spotlight-mode-text">Add Mode</span> • Press Enter to add • Escape to cancel
-    </div>
-  </div>
-</div>
 
   </body>
 </html>
