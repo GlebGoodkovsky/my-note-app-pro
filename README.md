@@ -1,6 +1,6 @@
-# Simple Note App
+# My Note App Pro
 
-A clean, simple, and modern note-taking web application built with vanilla HTML, CSS, and JavaScript, and deployed using a modern, automated workflow. All notes are saved directly in your browser's local storage.
+A clean, feature-rich, and modern note-taking web application built with vanilla HTML, CSS, and JavaScript. It features a fluid, animated interface and saves all notes directly in your browser's local storage.
 
 ### [➡️ Live Demo ⬅️](https://glebgoodkovsky.github.io/my-note-app-pro/)
 
@@ -10,47 +10,31 @@ A clean, simple, and modern note-taking web application built with vanilla HTML,
 
 ### Data Security Warning
 
-This application stores notes directly in your browser's `localStorage`. The data is **not encrypted**. For your own security, please do not store sensitive information such as passwords, personal identification numbers, or private keys.
-
-Below is the **updated README** (plain markdown) that adds every new feature you’ve shipped since the last official copy.
-
-Simply **append** the new bullets under the relevant headings.
+This application stores all note data directly in your browser's `localStorage`. The data is **not encrypted**. For your own security and privacy, please **do not** store sensitive information such as passwords, personal identification numbers, or private keys in this application.
 
 ---
 
-## ✨ New Features & Polish
+## ✨ Features
 
-- **Pastel Hashtag Colors**  
-  Every unique `#tag` receives its own gentle pastel color; identical tags keep the same hue across sessions.
+This application goes beyond a simple notepad, offering a professional suite of features for a seamless user experience.
 
-- **Purple Search Theme**  
-  When the search bar is active, both the input field and the 🔍 search button switch to a consistent purple accent in light and dark modes.
-
-- **Improved Dark-Mode Legibility**  
-  Text inside colored hashtag badges is now black while in dark mode, making tags easier to read.
-
-- **Rapid Search & Highlight**  
-  Real-time highlighting of search terms inside notes, plus persistent tag-based filtering from the sort dropdown.
-
-- **Undo / Redo Shortcuts**  
-  Use Ctrl + Z / Ctrl + Y (Cmd + Z / Cmd + Shift + Z on macOS) to step backward or forward through note changes.
-
-- **Keyboard Search Toggle**  
-  Press Ctrl + F (or Cmd + F) to show / hide the search bar without clicking.
-
-- **Responsive Drag Handle**  
-  On mobile, a subtle `⋮⋮` indicator appears so users know notes are draggable.
-
-- **Empty-State Message**  
-  A friendly “No notes yet – start typing!” prompt shows when the list is blank.
-
----
-
-## 🛠️ Additional Tech Details
-
-- **Security**: All note content is sanitized with [DOMPurify](https://github.com/cure53/DOMPurify) before rendering to prevent XSS.  
-- **Performance**: Input debouncing and virtualized re-rendering keep the UI snappy with large note sets.  
-- **Accessibility**: Emoji buttons now have `aria-label`s and all interactive elements are keyboard-reachable.
+-   **Full Note Management**: Create, edit, and delete notes with ease through an intuitive two-pane interface.
+-   **Rich Text Editor**: A dedicated editor pane allows for multi-line note content beyond just a simple title.
+-   **Dark & Light Themes**: Toggle between a sleek dark mode and a clean light mode. Your preference is saved automatically.
+-   **Powerful Organization**:
+    -   **Pinning**: Pin your most important notes to the top of the list.
+    -   **Drag & Drop Reordering**: Intuitively change the order of your notes by dragging them in the sidebar.
+    -   **Advanced Sorting**: Instantly sort all notes by Newest, Oldest, Title (A-Z), or Title (Z-A).
+-   **Undo & Redo History**: Never lose a change. Step backward and forward through your actions (note creation, deletion, edits, pins, and reorders) using `Ctrl/Cmd+Z` and `Ctrl/Cmd+Y`.
+-   **Spotlight Command Palette**:
+    -   **Quick Add**: Press the `➕` button to open a modal and quickly add a new note by title.
+    -   **Quick Search**: Press the `🔍` button to search the titles and content of all your notes instantly.
+-   **Data Portability**:
+    -   **Export**: Save all your notes to a `notes.json` file as a backup.
+    -   **Import**: Load notes from a previously exported JSON file.
+-   **Polished & Responsive UI**:
+    -   **Smooth Animations**: Enjoy fluid animations for deleting notes, undoing actions, and interacting with buttons.
+    -   **Collapsible Sidebar**: The app is fully responsive and features a collapsible sidebar for an optimal experience on any screen size.
 
 ---
 
@@ -58,10 +42,10 @@ Simply **append** the new bullets under the relevant headings.
 
 This project uses fundamental web technologies, enhanced by a modern build process for performance and reliability.
 
--   **HTML:** Structures the content of the application.
--   **CSS:** Handles all styling, including the layout, themes, and responsive design.
--   **JavaScript (Vanilla JS):** Powers all the interactive logic for note management, including drag-and-drop functionality.
--   **Vite:** Acts as a lightning-fast development server and bundles the code for production, automatically handling optimizations and cache-busting.
+-   **HTML:** Structures the content and layout of the application.
+-   **CSS:** Handles all styling, including the layout, light/dark themes, responsive design, and all animations.
+-   **JavaScript (Vanilla JS):** Powers all the interactive logic, from note management and local storage persistence to the undo/redo history and drag-and-drop functionality.
+-   **Vite:** Acts as a lightning-fast development server and bundles the code for production, automatically handling optimizations.
 -   **GitHub Actions:** Provides a fully automated CI/CD pipeline to build and deploy the application to GitHub Pages on every push to the `main` branch.
 
 ---
@@ -69,13 +53,14 @@ This project uses fundamental web technologies, enhanced by a modern build proce
 ## 🚀 How to Use
 
 1.  **Open the [Live Demo](https://glebgoodkovsky.github.io/my-note-app-pro/).**
-2.  **Change Theme:** Click the ☀️/🌙 icon in the top right.
-3.  **Add a Note:** Type in the input field and click "Add" or simply press `Enter`.
-4.  **Edit a Note:** Click on the note text, make your changes, and click outside or press `Enter` to save.
-5.  **Reorder Notes:** Click and hold any note, then drag it up or down to a new position.
-6.  **Delete a Note:** Hover over a note and click the 🗑️ icon.
-7.  **Sort Notes:** Choose a new method from the dropdown menu to instantly re-sort the entire list.
-8.  **Toggle Search/Filter:** Click the search/sort icon (🔍) or press `Ctrl + F` to reveal/hide the search bar.
+2.  **Add a Note:** Click the `➕` button, type a title in the pop-up modal, and press `Enter`.
+3.  **Search for a Note:** Click the `🔍` button, type your query, and click a result to open it in the editor.
+4.  **Edit a Note:** Select any note from the list on the left. The editor on the right will become active. Changes are saved automatically as you type.
+5.  **Pin/Delete a Note:** Hover over a note in the list and click the `📌` (pin) or `🗑️` (delete) icon.
+6.  **Reorder Notes:** Click and hold any note in the list, then drag it to a new position.
+7.  **Change Theme:** Click the `☀️`/`🌙` icon in the top right.
+8.  **Sort Notes:** Use the dropdown menu in the sidebar to re-sort the entire list.
+9.  **Import/Export:** Use the "Import" and "Export" buttons in the main header to manage your data.
 
 ---
 
